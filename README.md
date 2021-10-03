@@ -4,7 +4,7 @@ Staking contract implementation using the ERC-20 Casper crate
 
 ## Description
 
-Contract allowing to `stake` token of PICAS (**PicaSwap DEX**) to get rewarded with it.
+Contract allowing to `stake` token of **PICAS** (PicaSwap DEX) to get rewarded with it.
 
 **PicaSwap** is a Decentralized Exchange and implementation of Automated Market Maker designed on Casper Network.
 
