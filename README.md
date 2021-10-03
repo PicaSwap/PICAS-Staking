@@ -4,9 +4,9 @@ Staking contract implementation using the ERC-20 Casper crate
 
 ## Description
 
-Staking contract allowing to `stake` *Tomato token* to get rewarded with it.
+Contract allowing to `stake` native token of **Tomato Swap** (AMM DEX) to get rewarded with it.
 
-*Tomato token* is a native ERC20 token of **Tomato Swap** DEX of Casper Network.
+**Tomato Swap** is a Decentralized Exchange and implementation of Automated Market Maker designed on Casper Network.
 
 ## The Friendly Hackathon: Start Building On Casper!
 
