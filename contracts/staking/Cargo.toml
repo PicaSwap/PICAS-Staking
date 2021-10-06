@@ -1,0 +1,16 @@
+[package]
+name = "picas_staking"
+version = "0.1.0"
+authors = ["PICASWAP"]
+edition = "2018"
+
+[dependencies]
+casper-contract = { "1.3.3", features = ["std"] }
+casper-types = { "1.3.3", features = ["std"] }
+
+[[bin]]
+name = "picas_staking"
+path = "src/token_staking.rs"
+bench = false
+doctest = false
+test = false
