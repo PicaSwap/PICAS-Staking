@@ -11,6 +11,9 @@ mod entry_points;
 mod named_keys;
 pub mod constants;
 
+use casper_types::account::AccountHash;
+use casper_erc20::Address;
+use crate::constants::REWARDS_KEY_NAME;
 use crate::helpers::{ set_key, get_key, get_immediate_caller_address, make_dictionary_item_key, dictionary_read, dictionary_write };
 use crate::entry_points::default;
 
@@ -30,15 +33,17 @@ use casper_erc20::constants::{
 
 use casper_contract::{contract_api::{runtime, storage}, unwrap_or_revert::UnwrapOrRevert};
 use casper_types::{
-    contracts::{NamedKeys, URef} , CLValue, U256, ContractHash, Key,
+    contracts::{NamedKeys} , CLValue, U256, ContractHash, Key,
     URef, RuntimeArgs, runtime_args, system::CallStackElement };
 
 #[no_mangle]
 fn call() {
     
     let stake_contract_name: String = runtime::get_named_arg(STAKE_CONTRACT_KEY_NAME);
-    let stake_token_key: Key = runtime::get_named_arg(STAKE_TOKEN_KEY_NAME);
-    let reward_token_key: Key = runtime::get_named_arg(REWARD_TOKEN_KEY_NAME);
+
+    let stake_token_key: Key = runtime::get_named_arg(STAKE_TOKEN_HASH_KEY_NAME);
+    let reward_token_key: Key = runtime::get_named_arg(REWARD_TOKEN_HASH_KEY_NAME);
+
     let reward_rate: U256 = runtime::get_named_arg(REWARD_RATE_KEY_NAME);
 
     // TODO Check that Reward Token and Stake Token are existing ERC20 contracts
@@ -49,7 +54,7 @@ fn call() {
             storage::new_locked_contract(entry_points::default(), Some(named_keys), None, None);
     
     // ContractHash is saved to owner's account named keys
-    runtime::put_key(stake_contract_name: &str, Key::from(contract_hash));
+    runtime::put_key(stake_contract_name.as_str(), Key::from(contract_hash));
     
 }
 
@@ -64,7 +69,7 @@ pub extern "C" fn stake() {
 
     let staker = get_immediate_caller_address().unwrap_or_revert();
     let balances_uref = get_key(BALANCES_KEY_NAME).unwrap_or_revert();
-    let stake_contract = runtime::get_caller().unwrap_or_revert();
+    let stake_contract: AccountHash = runtime::get_caller();
 
     update_reward();
     
@@ -87,10 +92,10 @@ pub extern "C" fn stake() {
 #[no_mangle]
 pub extern "C" fn withdraw() {
     
-    let amount: U256 = runtime::get_named_arg(AMOUNT_KEY_NAME).unwrap_or_revert();
+    let amount: U256 = runtime::get_named_arg(AMOUNT_KEY_NAME);
 
     let staker = get_immediate_caller_address().unwrap_or_revert();
-    let balances_uref = get_key(BALANCES_KEY_NAME);
+    let balances_uref = get_key(BALANCES_KEY_NAME).unwrap_or_revert();
 
     update_reward();
 
@@ -98,7 +103,7 @@ pub extern "C" fn withdraw() {
     total_supply_sub(amount);
 
     // update balance of caller
-    dictionary_sub(balances_uref, staker: Address, amount: U256);
+    dictionary_sub(balances_uref, staker, amount);
 
     // Transfer `amount` of Stake Token from the stake contract to caller
     erc20_transfer(
@@ -118,8 +123,8 @@ pub extern "C" fn get_reward() {
     update_reward();
 
     let staker = get_immediate_caller_address().unwrap_or_revert();
-    let balances_uref = get_key(BALANCES_KEY_NAME);
-    let rewards_uref = get_key(REWARDS_KEY_NAME);
+    let balances_uref = get_key(BALANCES_KEY_NAME).unwrap_or_revert();
+    let rewards_uref = get_key(REWARDS_KEY_NAME).unwrap_or_revert();
 
     // get reward_value of the caller stored in "rewards" dictionary
     let staker_reward: U256 = dictionary_read(rewards_uref, staker);
@@ -195,10 +200,10 @@ fn dictionary_sub(
 fn totall_supply_add(amount: U256) {
     
     let new_total_supply: U256 = {
-        let total_supply: U256 = get_key(TOTAL_SUPPLY_KEY_NAME);
+        let total_supply: U256 = get_key(TOTAL_SUPPLY_KEY_NAME).unwrap_or_revert();
         total_supply
             .checked_add(amount)
-            .ok_or(Error::Overflow)?
+            .ok_or(Error::Overflow).unwrap_or_revert()
     };
 
     set_key(TOTAL_SUPPLY_KEY_NAME, new_total_supply);
@@ -208,10 +213,10 @@ fn totall_supply_add(amount: U256) {
 fn total_supply_sub(amount: U256) {
     
     let new_total_supply: U256 = {
-        let total_supply: U256 = get_key(TOTAL_SUPPLY_KEY_NAME);
+        let total_supply: U256 = get_key(TOTAL_SUPPLY_KEY_NAME).unwrap_or_revert();
         total_supply
             .checked_sub(amount)
-            .ok_or(Error::InsufficientBalance)?
+            .ok_or(Error::InsufficientBalance).unwrap_or_revert()
     };
 
     set_key(TOTAL_SUPPLY_KEY_NAME, new_total_supply);
@@ -220,26 +225,26 @@ fn total_supply_sub(amount: U256) {
 
 fn erc20_transfer_from(
     erc20_hash_key_name: &str,
-    staker: CallStackElement,
-    stake_contract: ,
+    staker: Address,
+    stake_contract: AccountHash,
     amount: U256
 ) {
-    let erc20_contract_hash: ContractHash = get_key(erc20_hash_key_name);
+    let erc20_contract_hash: ContractHash = get_key(erc20_hash_key_name).unwrap_or_revert();
     runtime::call_contract(erc20_contract_hash, TRANSFER_FROM_ENTRY_POINT_NAME, runtime_args!{
         OWNER_RUNTIME_ARG_NAME => staker,
         RECIPIENT_RUNTIME_ARG_NAME => stake_contract,
         AMOUNT_RUNTIME_ARG_NAME => amount
-    });
+    })
 }
 
 fn erc20_transfer(
     erc20_hash_key_name: &str,
-    staker: CallStackElement,
+    staker: Address,
     amount: U256
 ) {
     let erc20_contract_hash: ContractHash = get_key(erc20_hash_key_name).unwrap_or_revert();
     runtime::call_contract(erc20_contract_hash, TRANSFER_ENTRY_POINT_NAME, runtime_args!{
         RECIPIENT_RUNTIME_ARG_NAME => staker,
         AMOUNT_RUNTIME_ARG_NAME => amount
-    });
+    })
 }

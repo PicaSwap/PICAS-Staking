@@ -15,7 +15,7 @@ features = ["alloc"]
 default-features = false
 
 [[bin]]
-name = "token_staking_contract"
+name = "staking_contract"
 path = "src/token_staking.rs"
 bench = false
 doctest = false

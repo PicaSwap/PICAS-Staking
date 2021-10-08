@@ -1,4 +1,3 @@
-
 # Created by https://www.toptal.com/developers/gitignore/api/rust,visualstudiocode
 # Edit at https://www.toptal.com/developers/gitignore?templates=rust,visualstudiocode
 
@@ -37,3 +36,5 @@ Cargo.lock
 .ionide
 
 # End of https://www.toptal.com/developers/gitignore/api/rust,visualstudiocode
+#
+.DS_Store

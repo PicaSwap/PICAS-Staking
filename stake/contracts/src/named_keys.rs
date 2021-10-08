@@ -1,6 +1,12 @@
+use casper_types::BlockTime;
+use casper_types::ContractHash;
+use casper_types::HashAddr;
 use casper_types::{contracts::NamedKeys, Key, URef, U256};
-use casper_contract::contract_api::{runtime, storage};
-use casper_erc20::Error;
+use alloc::string::{String, ToString};
+use casper_contract::{
+    contract_api::{runtime, storage},
+    unwrap_or_revert::UnwrapOrRevert,
+};
 
 use crate::constants::{
     STAKE_TOKEN_HASH_KEY_NAME, REWARD_TOKEN_HASH_KEY_NAME, REWARD_RATE_KEY_NAME,
@@ -60,7 +66,8 @@ pub fn default(
     // 3. "last_update_time" read and write
     // Probably we will be using Block time
     // We set value on initial deploy call from current Block
-    let last_update_time: BlockTime = runtime::get_blocktime();
+    let last_update_time: BlockTime = runtime::get_blocktime().into_bytes();
+
     let last_update_time_key = {
         let last_update_time_uref = storage::new_uref(last_update_time).into_read_write();
         Key::from(last_update_time_uref)

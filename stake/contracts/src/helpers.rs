@@ -5,6 +5,8 @@ use casper_contract::{contract_api::{runtime, storage}, unwrap_or_revert::Unwrap
 use casper_types::{URef, system::CallStackElement, U256};
 use casper_erc20::Address;
 use core::convert::TryInto;
+use casper_erc20::Error;
+use alloc::string::String;
 
 // Helper functions
 
