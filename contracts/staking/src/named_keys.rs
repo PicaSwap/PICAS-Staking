@@ -1,15 +1,14 @@
-#![no_main]
-#![no_std]
-mod constants;
-
 use casper_types::{contracts::NamedKeys, Key, URef, U256};
+use casper_contract::contract_api::{runtime, storage};
+use casper_erc20::Error;
 
 use crate::constants::{
     STAKE_TOKEN_HASH_KEY_NAME, REWARD_TOKEN_HASH_KEY_NAME, REWARD_RATE_KEY_NAME,
     LAST_UPDATE_KEY_NAME, REWARD_PER_TOKEN_STORED_KEY_NAME, TOTAL_SUPPLY_KEY_NAME,
     STAKE_CONTRACT_KEY_NAME, BALANCES_KEY_NAME, REWARDS_KEY_NAME,
     USER_REWARD_PER_TOKEN_PAID_KEY_NAME,
-}
+};
+use crate::helpers::{ dictionary_write, get_immediate_caller_address };
 
 pub fn default(
     stake_contract_name: String,

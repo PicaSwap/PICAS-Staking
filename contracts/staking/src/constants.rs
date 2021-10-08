@@ -1,6 +1,6 @@
 //! Constants used by the Stake contract.
 
-pub const STAKE_CONTRACT_KEY_NAME: &str = "stake_contract_name";
+pub const STAKE_CONTRACT_KEY_NAME: &str = "staking_contract";
 
 // Named keys
 

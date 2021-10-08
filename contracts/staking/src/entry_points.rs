@@ -1,15 +1,14 @@
-mod constants;
+use alloc::{string::String, vec};
 
 use crate::constants::{
     GET_REWARD_ENTRY_POINT_NAME, WITHDRAW_ENTRY_POINT_NAME, STAKE_ENTRY_POINT_NAME,
     AMOUNT_KEY_NAME, 
 };
 
-use alloc::{string::String, vec};
-
 use casper_types::{
     URef, U512, CLType, CLTyped, EntryPoint, EntryPointAccess, EntryPointType, EntryPoints, Parameter,
 };
+use casper_erc20::Address;
 
 fn stake() -> EntryPoint {
     EntryPoint::new(

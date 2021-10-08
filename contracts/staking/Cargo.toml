@@ -1,12 +1,18 @@
 [package]
 name = "wcspr"
 version = "0.1.0"
-authors = ["PICASWAP"]
+authors = ["PicaSwap"]
 edition = "2018"
 
 [dependencies]
 casper-contract = "1.3.3"
 casper-types = "1.3.3"
+casper-erc20 = "0.2.0"
+
+[dependencies.base64]
+version = "0.13.0"
+features = ["alloc"]
+default-features = false
 
 [[bin]]
 name = "token_staking_contract"

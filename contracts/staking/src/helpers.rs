@@ -2,7 +2,8 @@ use casper_types::bytesrepr::ToBytes;
 use casper_types::CLTyped;
 use casper_types::bytesrepr::FromBytes;
 use casper_contract::{contract_api::{runtime, storage}, unwrap_or_revert::UnwrapOrRevert};
-use casper_types::{URef, system::CallStackElement, Address, U256};
+use casper_types::{URef, system::CallStackElement, U256};
+use casper_erc20::Address;
 use core::convert::TryInto;
 
 // Helper functions
