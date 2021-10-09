@@ -51,10 +51,10 @@ pub struct TestFixture {
 }
 
 impl TestFixture {
-    //pub const STAKE_TOKEN: &'static str = "PICA SWAP Token";
-    //pub const REWARD_TOKEN: &'static str = "PICAS";
-    pub const STAKE_TOKEN: Key = Key::from_formatted_str("hash-d60beb45bdd2002e6e2581467f94196ec9cf4683c25cabe1ffefa4a14d2bb47b").unwrap_or_revert();
-    pub const REWARD_TOKEN: Key = Key::from_formatted_str("hash-d60beb45bdd2002e6e2581467f94196ec9cf4683c25cabe1ffefa4a14d2bb47b").unwrap_or_revert();
+    pub const STAKE_TOKEN = Key::from_formatted_str("hash-d60beb45bdd2002e6e2581467f94196ec9cf4683c25cabe1ffefa4a14d2bb47b");
+    pub const REWARD_TOKEN = Key::from_formatted_str("hash-d60beb45bdd2002e6e2581467f94196ec9cf4683c25cabe1ffefa4a14d2bb47b");
+    //pub const STAKE_TOKEN: Key = Key::try_from("hash-d60beb45bdd2002e6e2581467f94196ec9cf4683c25cabe1ffefa4a14d2bb47b".to_string());
+    //pub const REWARD_TOKEN: Key = Key::TryFrom("hash-d60beb45bdd2002e6e2581467f94196ec9cf4683c25cabe1ffefa4a14d2bb47b".to_string());
     pub const REWARD_RATE: U256 = U256::from(100000000000);
     pub const STAKING_CONTRACT_KEY_NAME: &'static str = "stake_wcspr_reward_picas";
     //const TOKEN_TOTAL_SUPPLY_AS_U64: u64 = 1000;
