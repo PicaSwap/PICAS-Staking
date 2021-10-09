@@ -9,6 +9,7 @@ use casper_types::{
     bytesrepr::{FromBytes, ToBytes},
     runtime_args, AsymmetricType, CLTyped, ContractHash, Key, PublicKey, RuntimeArgs, U256, U512,
 };
+use casper_contract::contract_api::unwrap_or_revert::UnwrapOrRevert;
 
 //#[path = "././stake/src/constants.rs"]
 //mod constants;
@@ -51,10 +52,8 @@ pub struct TestFixture {
 }
 
 impl TestFixture {
-    pub const STAKE_TOKEN = Key::from_formatted_str("hash-d60beb45bdd2002e6e2581467f94196ec9cf4683c25cabe1ffefa4a14d2bb47b");
-    pub const REWARD_TOKEN = Key::from_formatted_str("hash-d60beb45bdd2002e6e2581467f94196ec9cf4683c25cabe1ffefa4a14d2bb47b");
-    //pub const STAKE_TOKEN: Key = Key::try_from("hash-d60beb45bdd2002e6e2581467f94196ec9cf4683c25cabe1ffefa4a14d2bb47b".to_string());
-    //pub const REWARD_TOKEN: Key = Key::TryFrom("hash-d60beb45bdd2002e6e2581467f94196ec9cf4683c25cabe1ffefa4a14d2bb47b".to_string());
+    pub const STAKE_TOKEN: Key = Key::from_formatted_str("hash-d60beb45bdd2002e6e2581467f94196ec9cf4683c25cabe1ffefa4a14d2bb47b").unwrap();
+    pub const REWARD_TOKEN: Key = Key::from_formatted_str("hash-d60beb45bdd2002e6e2581467f94196ec9cf4683c25cabe1ffefa4a14d2bb47b").unwrap();
     pub const REWARD_RATE: U256 = U256::from(100000000000);
     pub const STAKING_CONTRACT_KEY_NAME: &'static str = "stake_wcspr_reward_picas";
     //const TOKEN_TOTAL_SUPPLY_AS_U64: u64 = 1000;
