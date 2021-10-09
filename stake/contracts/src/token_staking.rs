@@ -11,36 +11,33 @@ mod entry_points;
 mod named_keys;
 pub mod constants;
 
-use casper_types::account::AccountHash;
-use casper_erc20::Address;
-use crate::constants::REWARDS_KEY_NAME;
-use crate::helpers::{ set_key, get_key, get_immediate_caller_address, make_dictionary_item_key, dictionary_read, dictionary_write };
-use crate::entry_points::default;
+use crate::helpers::{ set_key, get_key, get_immediate_caller_address, dictionary_read, dictionary_write };
 
 use crate::constants::{
-    STAKE_CONTRACT_KEY_NAME, REWARD_TOKEN_HASH_KEY_NAME, STAKE_TOKEN_HASH_KEY_NAME, REWARD_RATE_KEY_NAME,
-    TOTAL_SUPPLY_KEY_NAME, AMOUNT_KEY_NAME, BALANCES_KEY_NAME,
+    STAKING_CONTRACT_KEY_NAME, REWARD_TOKEN_HASH_KEY_NAME, STAKE_TOKEN_HASH_KEY_NAME,
+    REWARD_RATE_KEY_NAME, TOTAL_SUPPLY_KEY_NAME, AMOUNT_KEY_NAME, BALANCES_KEY_NAME,
+    REWARDS_KEY_NAME, USER_REWARD_PER_TOKEN_PAID_KEY_NAME, LAST_UPDATE_KEY_NAME,
+    REWARD_PER_TOKEN_STORED_KEY_NAME
 };
 
 use alloc::string::String;
 
-use casper_erc20::Error;
-use casper_erc20::constants::{
-    TRANSFER_ENTRY_POINT_NAME, TRANSFER_FROM_ENTRY_POINT_NAME, APPROVE_ENTRY_POINT_NAME,
-    ALLOWANCE_ENTRY_POINT_NAME, BALANCE_OF_ENTRY_POINT_NAME, OWNER_RUNTIME_ARG_NAME,
-    RECIPIENT_RUNTIME_ARG_NAME, AMOUNT_RUNTIME_ARG_NAME
+use casper_erc20::{ Error, Address,
+    constants::{
+        TRANSFER_ENTRY_POINT_NAME, TRANSFER_FROM_ENTRY_POINT_NAME, OWNER_RUNTIME_ARG_NAME,
+        RECIPIENT_RUNTIME_ARG_NAME, AMOUNT_RUNTIME_ARG_NAME}
     };
 
 use casper_contract::{contract_api::{runtime, storage}, unwrap_or_revert::UnwrapOrRevert};
 use casper_types::{
-    contracts::{NamedKeys} , CLValue, U256, ContractHash, Key,
-    URef, RuntimeArgs, runtime_args, system::CallStackElement };
+    contracts::{NamedKeys}, U256, ContractHash, Key,
+    URef, RuntimeArgs, runtime_args, account::AccountHash};
 
 #[no_mangle]
 fn call() {
     
-    let stake_contract_name: String = runtime::get_named_arg(STAKE_CONTRACT_KEY_NAME);
-
+    let staking_contract_name: String = runtime::get_named_arg(STAKING_CONTRACT_KEY_NAME);
+    
     let stake_token_key: Key = runtime::get_named_arg(STAKE_TOKEN_HASH_KEY_NAME);
     let reward_token_key: Key = runtime::get_named_arg(REWARD_TOKEN_HASH_KEY_NAME);
 
@@ -48,13 +45,13 @@ fn call() {
 
     // TODO Check that Reward Token and Stake Token are existing ERC20 contracts
 
-    let named_keys: NamedKeys = named_keys::default(stake_contract_name, stake_token_key, reward_token_key, reward_rate);
-
+    let named_keys: NamedKeys = named_keys::default(staking_contract_name.clone(), stake_token_key, reward_token_key, reward_rate);
+    
     let (contract_hash, _version) =
             storage::new_locked_contract(entry_points::default(), Some(named_keys), None, None);
     
     // ContractHash is saved to owner's account named keys
-    runtime::put_key(stake_contract_name.as_str(), Key::from(contract_hash));
+    runtime::put_key(staking_contract_name.as_str(), Key::from(contract_hash));
     
 }
 
@@ -69,12 +66,13 @@ pub extern "C" fn stake() {
 
     let staker = get_immediate_caller_address().unwrap_or_revert();
     let balances_uref = get_key(BALANCES_KEY_NAME).unwrap_or_revert();
+    let rewards_uref = get_key(REWARDS_KEY_NAME).unwrap_or_revert();
     let stake_contract: AccountHash = runtime::get_caller();
 
-    update_reward();
+    update_reward(staker, balances_uref, rewards_uref);
     
     // update total_supply
-    totall_supply_add(amount);
+    named_key_add(amount, TOTAL_SUPPLY_KEY_NAME);
 
     // update balance of caller
     dictionary_add(balances_uref, staker, amount);
@@ -96,11 +94,12 @@ pub extern "C" fn withdraw() {
 
     let staker = get_immediate_caller_address().unwrap_or_revert();
     let balances_uref = get_key(BALANCES_KEY_NAME).unwrap_or_revert();
+    let rewards_uref = get_key(REWARDS_KEY_NAME).unwrap_or_revert();
 
-    update_reward();
+    update_reward(staker, balances_uref, rewards_uref);
 
     // update total_supply
-    total_supply_sub(amount);
+    named_key_sub(amount, TOTAL_SUPPLY_KEY_NAME);
 
     // update balance of caller
     dictionary_sub(balances_uref, staker, amount);
@@ -112,7 +111,7 @@ pub extern "C" fn withdraw() {
         amount
     );
 
-    // TODO brainstorm send reward tokens to user
+    // TODO Brainstorm: Send Reward to caller on Withdrawal?
     //get_reward();
 
 }
@@ -120,11 +119,11 @@ pub extern "C" fn withdraw() {
 #[no_mangle]
 pub extern "C" fn get_reward() {
     
-    update_reward();
-
     let staker = get_immediate_caller_address().unwrap_or_revert();
     let balances_uref = get_key(BALANCES_KEY_NAME).unwrap_or_revert();
     let rewards_uref = get_key(REWARDS_KEY_NAME).unwrap_or_revert();
+
+    update_reward(staker, balances_uref, rewards_uref);
 
     // get reward_value of the caller stored in "rewards" dictionary
     let staker_reward: U256 = dictionary_read(rewards_uref, staker);
@@ -142,17 +141,77 @@ pub extern "C" fn get_reward() {
 }
 
 #[no_mangle]
- fn update_reward() {
+ fn update_reward(
+    staker: Address,
+    balances_uref: URef,
+    rewards_uref: URef
+ ) {
+    
+    let current_block_time: U256 = U256::from(u64::from(runtime::get_blocktime()));
+    let user_reward_per_token_paid_uref: URef = get_key(USER_REWARD_PER_TOKEN_PAID_KEY_NAME).unwrap_or_revert();
+    let user_reward_per_token_paid: U256 = dictionary_read(user_reward_per_token_paid_uref, staker);
     
     // update reward_per_token_stored
-
+    let reward_per_token_stored: U256 = reward_per_token(current_block_time);
+    
     // update last_update_time
+    set_key(LAST_UPDATE_KEY_NAME, current_block_time);
+    //let last_update_time: BlockTime = runtime::get_blocktime().into_bytes();
+
+    // update reward amount of the staker
+    dictionary_add(
+        rewards_uref,
+        staker,
+        earned(staker, balances_uref, user_reward_per_token_paid)
+    );
+    
+    // update "user_reward_per_token_paid" dictionary
+    dictionary_write(user_reward_per_token_paid_uref, staker, reward_per_token_stored);
 }
 
 #[no_mangle]
- fn reward_per_token() {
+/// Computes the running sum of 'R' over 'total supply' of 'token stake'
+fn reward_per_token(current_block_time: U256) -> U256 {
     
-    //
+    let total_supply: U256 = get_key(TOTAL_SUPPLY_KEY_NAME).unwrap_or_revert();
+    let reward_per_token_stored: U256 = get_key(REWARD_PER_TOKEN_STORED_KEY_NAME).unwrap_or_revert();
+
+    if total_supply.is_zero() {
+        // TODO implement Error for runtime::revert()
+        // TODO Brainstorm: Return 0 or current reward_per_token_stored
+        reward_per_token_stored
+    } else {
+        
+        let reward_rate: U256 = get_key(REWARD_RATE_KEY_NAME).unwrap_or_revert();
+        let last_update_time: U256 = get_key(LAST_UPDATE_KEY_NAME).unwrap_or_revert();
+        
+        let new_value: U256 = {
+            reward_per_token_stored
+                // TODO rework time operations
+                .checked_add(reward_rate * ( current_block_time - last_update_time ) / total_supply)
+                .ok_or(Error::Overflow).unwrap_or_revert()
+        };
+    
+        set_key(REWARD_PER_TOKEN_STORED_KEY_NAME, new_value);
+
+        new_value
+
+    }
+}
+
+#[no_mangle]
+/// Amount of Rewads tokens user can claim so far
+fn earned(
+    staker: Address,
+    balances_uref: URef,
+    user_reward_per_token_paid: U256
+) -> U256 {
+    
+    let balance: U256 = dictionary_read(balances_uref, staker);
+    let reward_per_token_stored: U256 = get_key(REWARD_PER_TOKEN_STORED_KEY_NAME).unwrap_or_revert();
+
+    balance * ( reward_per_token_stored - user_reward_per_token_paid )
+    
 }
 
 fn dictionary_add(
@@ -197,29 +256,29 @@ fn dictionary_sub(
     Ok(())
 }
 
-fn totall_supply_add(amount: U256) {
+fn named_key_add(amount: U256, key_name: &str) {
     
-    let new_total_supply: U256 = {
-        let total_supply: U256 = get_key(TOTAL_SUPPLY_KEY_NAME).unwrap_or_revert();
-        total_supply
+    let new_value: U256 = {
+        let current_value: U256 = get_key(key_name).unwrap_or_revert();
+        current_value
             .checked_add(amount)
             .ok_or(Error::Overflow).unwrap_or_revert()
     };
 
-    set_key(TOTAL_SUPPLY_KEY_NAME, new_total_supply);
+    set_key(key_name, new_value);
 
 }
 
-fn total_supply_sub(amount: U256) {
+fn named_key_sub(amount: U256, key_name: &str) {
     
-    let new_total_supply: U256 = {
-        let total_supply: U256 = get_key(TOTAL_SUPPLY_KEY_NAME).unwrap_or_revert();
-        total_supply
+    let new_value: U256 = {
+        let current_value: U256 = get_key(key_name).unwrap_or_revert();
+        current_value
             .checked_sub(amount)
             .ok_or(Error::InsufficientBalance).unwrap_or_revert()
     };
 
-    set_key(TOTAL_SUPPLY_KEY_NAME, new_total_supply);
+    set_key(key_name, new_value);
 
 }
 

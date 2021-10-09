@@ -1,23 +1,20 @@
-use casper_types::BlockTime;
-use casper_types::ContractHash;
-use casper_types::HashAddr;
-use casper_types::{contracts::NamedKeys, Key, URef, U256};
+use casper_types::{U256, URef, contracts::NamedKeys, Key, HashAddr, ContractHash};
 use alloc::string::{String, ToString};
 use casper_contract::{
     contract_api::{runtime, storage},
-    unwrap_or_revert::UnwrapOrRevert,
+    unwrap_or_revert::UnwrapOrRevert
 };
 
 use crate::constants::{
     STAKE_TOKEN_HASH_KEY_NAME, REWARD_TOKEN_HASH_KEY_NAME, REWARD_RATE_KEY_NAME,
     LAST_UPDATE_KEY_NAME, REWARD_PER_TOKEN_STORED_KEY_NAME, TOTAL_SUPPLY_KEY_NAME,
-    STAKE_CONTRACT_KEY_NAME, BALANCES_KEY_NAME, REWARDS_KEY_NAME,
-    USER_REWARD_PER_TOKEN_PAID_KEY_NAME,
+    BALANCES_KEY_NAME, REWARDS_KEY_NAME, USER_REWARD_PER_TOKEN_PAID_KEY_NAME,
+    STAKING_CONTRACT_KEY_NAME
 };
 use crate::helpers::{ dictionary_write, get_immediate_caller_address };
 
 pub fn default(
-    stake_contract_name: String,
+    staking_contract_name: String,
     stake_token_key: Key,
     reward_token_key: Key,
     reward_rate: U256
@@ -28,9 +25,9 @@ pub fn default(
 
     // 0. Name of the Stake contract
 
-    let stake_contract_name_key = {
-        let stake_contract_name_uref = storage::new_uref(stake_contract_name).into_read();
-        Key::from(stake_contract_name_uref)
+    let staking_contract_name_key = {
+        let staking_contract_name_uref = storage::new_uref(staking_contract_name).into_read();
+        Key::from(staking_contract_name_uref)
     };
 
     // 1. We need to pass ERC20 contracts of PICAS and WCSPR tokens
@@ -66,7 +63,8 @@ pub fn default(
     // 3. "last_update_time" read and write
     // Probably we will be using Block time
     // We set value on initial deploy call from current Block
-    let last_update_time: BlockTime = runtime::get_blocktime().into_bytes();
+    //let last_update_time: BlockTime = runtime::get_blocktime().into_bytes();
+    let last_update_time: U256 = U256::from(u64::from(runtime::get_blocktime()));
 
     let last_update_time_key = {
         let last_update_time_uref = storage::new_uref(last_update_time).into_read_write();
@@ -102,17 +100,6 @@ pub fn default(
         Key::from(user_reward_per_token_paid_uref)
     };
 
-    let rewards_dictionary_uref: URef = storage::new_dictionary(REWARDS_KEY_NAME).unwrap_or_revert();
-    let rewards_dictionary_key = {
-        
-        // Sets up initial balance for the caller - either an account, or a contract.
-        dictionary_write(rewards_dictionary_uref, caller, total_supply);
-
-        runtime::remove_key(REWARDS_KEY_NAME);
-
-        Key::from(rewards_dictionary_uref)
-    };
-
     // 2. "rewards"
     // Stores reward value of users
     // Updated on stake, withdraw or get reward operations
@@ -142,7 +129,7 @@ pub fn default(
 
     // We need to put the contract on-chain and describe entry_points
 
-    named_keys.insert(STAKE_CONTRACT_KEY_NAME.to_string(), stake_contract_name_key);
+    named_keys.insert(STAKING_CONTRACT_KEY_NAME.to_string(), staking_contract_name_key);
     named_keys.insert(STAKE_TOKEN_HASH_KEY_NAME.to_string(), stake_token_hash_key);
     named_keys.insert(REWARD_TOKEN_HASH_KEY_NAME.to_string(), reward_token_hash_key);
     named_keys.insert(REWARD_RATE_KEY_NAME.to_string(), reward_rate_key);

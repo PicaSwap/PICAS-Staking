@@ -10,8 +10,29 @@ use casper_types::{
     runtime_args, AsymmetricType, CLTyped, ContractHash, Key, PublicKey, RuntimeArgs, U256, U512,
 };
 
-const CONTRACT_ERC20_TOKEN: &str = "picas_token.wasm";
-const CONTRACT_KEY_NAME: &str = "picas_token";
+//#[path = "././stake/src/constants.rs"]
+//mod constants;
+
+//use constants as consts;
+
+const STAKING_CONTRACT_KEY_NAME: &str = "staking_contract";
+const STAKE_TOKEN_HASH_KEY_NAME: &str = "stake_token_hash";
+const REWARD_TOKEN_HASH_KEY_NAME: &str = "reward_token_hash";
+const REWARD_RATE_KEY_NAME: &str = "reward_rate";
+const LAST_UPDATE_KEY_NAME: &str = "last_update_time";
+const REWARD_PER_TOKEN_STORED_KEY_NAME: &str = "reward_per_token_stored";
+const TOTAL_SUPPLY_KEY_NAME: &str = "total_supply";
+const BALANCES_KEY_NAME: &str = "balances";
+const REWARDS_KEY_NAME: &str = "rewards";
+const USER_REWARD_PER_TOKEN_PAID_KEY_NAME: &str = "user_reward_per_token_paid";
+const STAKE_ENTRY_POINT_NAME: &str = "stake";
+const WITHDRAW_ENTRY_POINT_NAME: &str = "withdraw";
+const GET_REWARD_ENTRY_POINT_NAME: &str = "get_reward";
+const AMOUNT_KEY_NAME:  &str = "amount";
+
+const CONTRACT_FILE: &str = "staking_contract.wasm";
+const CONTRACT_KEY_NAME: &str = "stake_wcspr_reward_picas";
+
 
 fn blake2b256(item_key_string: &[u8]) -> Box<[u8]> {
     let mut hasher = VarBlake2b::new(32).unwrap();
@@ -30,14 +51,17 @@ pub struct TestFixture {
 }
 
 impl TestFixture {
-    pub const TOKEN_NAME: &'static str = "PICA SWAP Token";
-    pub const TOKEN_SYMBOL: &'static str = "PICAS";
-    pub const TOKEN_DECIMALS: u8 = 18;
-    const TOKEN_TOTAL_SUPPLY_AS_U64: u64 = 1000;
+    //pub const STAKE_TOKEN: &'static str = "PICA SWAP Token";
+    //pub const REWARD_TOKEN: &'static str = "PICAS";
+    pub const STAKE_TOKEN: Key = Key::from_formatted_str("hash-d60beb45bdd2002e6e2581467f94196ec9cf4683c25cabe1ffefa4a14d2bb47b").unwrap_or_revert();
+    pub const REWARD_TOKEN: Key = Key::from_formatted_str("hash-d60beb45bdd2002e6e2581467f94196ec9cf4683c25cabe1ffefa4a14d2bb47b").unwrap_or_revert();
+    pub const REWARD_RATE: U256 = U256::from(100000000000);
+    pub const STAKING_CONTRACT_KEY_NAME: &'static str = "stake_wcspr_reward_picas";
+    //const TOKEN_TOTAL_SUPPLY_AS_U64: u64 = 1000;
 
-    pub fn token_total_supply() -> U256 {
-        Self::TOKEN_TOTAL_SUPPLY_AS_U64.into()
-    }
+    //pub fn token_total_supply() -> U256 {
+    //  Self::TOKEN_TOTAL_SUPPLY_AS_U64.into()
+    //}
 
     pub fn install_contract() -> TestFixture {
         let ali = PublicKey::ed25519_from_bytes([3u8; 32]).unwrap();
@@ -49,12 +73,12 @@ impl TestFixture {
             .with_public_key(bob.clone(), U512::from(500_000_000_000_000_000u64))
             .build();
 
-        let session_code = Code::from(CONTRACT_ERC20_TOKEN);
+        let session_code = Code::from(CONTRACT_FILE);
         let session_args = runtime_args! {
-            consts::NAME_RUNTIME_ARG_NAME => TestFixture::TOKEN_NAME,
-            consts::SYMBOL_RUNTIME_ARG_NAME => TestFixture::TOKEN_SYMBOL,
-            consts::DECIMALS_RUNTIME_ARG_NAME => TestFixture::TOKEN_DECIMALS,
-            consts::TOTAL_SUPPLY_RUNTIME_ARG_NAME => TestFixture::token_total_supply()
+            STAKING_CONTRACT_KEY_NAME => TestFixture::STAKING_CONTRACT_KEY_NAME,
+            STAKE_TOKEN_HASH_KEY_NAME => TestFixture::STAKE_TOKEN,
+            REWARD_TOKEN_HASH_KEY_NAME => TestFixture::REWARD_TOKEN,
+            REWARD_RATE_KEY_NAME => TestFixture::REWARD_RATE
         };
 
         let session = SessionBuilder::new(session_code, session_args)
@@ -109,84 +133,102 @@ impl TestFixture {
         self.context.run(session);
     }
 
-    pub fn token_name(&self) -> String {
-        self.query_contract(consts::NAME_RUNTIME_ARG_NAME).unwrap()
-    }
-
-    pub fn token_symbol(&self) -> String {
-        self.query_contract(consts::SYMBOL_RUNTIME_ARG_NAME)
+    pub fn staking_contract_name(&self) -> String {
+        self.query_contract(STAKING_CONTRACT_KEY_NAME)
             .unwrap()
     }
 
-    pub fn token_decimals(&self) -> u8 {
-        self.query_contract(consts::DECIMALS_RUNTIME_ARG_NAME)
+    pub fn stake_token_hash(&self) -> Key {
+        self.query_contract(STAKE_TOKEN_HASH_KEY_NAME)
             .unwrap()
     }
 
-    pub fn balance_of(&self, account: Key) -> Option<U256> {
+    pub fn reward_token_hash(&self) -> Key {
+        self.query_contract(REWARD_TOKEN_HASH_KEY_NAME)
+            .unwrap()
+    }
+
+    pub fn reward_rate(&self) -> U256 {
+        self.query_contract(REWARD_RATE_KEY_NAME)
+            .unwrap()
+    }
+
+    pub fn last_update_time(&self) -> U256 {
+        self.query_contract(LAST_UPDATE_KEY_NAME)
+            .unwrap()
+    }
+
+    pub fn reward_per_token_stored(&self) -> U256 {
+        self.query_contract(REWARD_PER_TOKEN_STORED_KEY_NAME)
+            .unwrap()
+    }
+
+    pub fn total_supply(&self) -> U256 {
+        self.query_contract(TOTAL_SUPPLY_KEY_NAME)
+            .unwrap()
+    }
+
+    pub fn balance(&self, account: Key) -> Option<U256> {
         let item_key = base64::encode(&account.to_bytes().unwrap());
 
         let key = Key::Hash(self.contract_hash().value());
         let value = self
             .context
-            .query_dictionary_item(key, Some(consts::BALANCES_KEY_NAME.to_string()), item_key)
+            .query_dictionary_item(key, Some(BALANCES_KEY_NAME.to_string()), item_key)
             .ok()?;
 
         Some(value.into_t::<U256>().unwrap())
     }
 
-    pub fn allowance(&self, owner: Key, spender: Key) -> Option<U256> {
-        let mut preimage = Vec::new();
-        preimage.append(&mut owner.to_bytes().unwrap());
-        preimage.append(&mut spender.to_bytes().unwrap());
-        let key_bytes = blake2b256(&preimage);
-        let allowance_item_key = hex::encode(&key_bytes);
+    pub fn reward(&self, account: Key) -> Option<U256> {
+        let item_key = base64::encode(&account.to_bytes().unwrap());
 
         let key = Key::Hash(self.contract_hash().value());
-
         let value = self
             .context
-            .query_dictionary_item(
-                key,
-                Some(consts::ALLOWANCES_KEY_NAME.to_string()),
-                allowance_item_key,
-            )
+            .query_dictionary_item(key, Some(REWARDS_KEY_NAME.to_string()), item_key)
             .ok()?;
 
         Some(value.into_t::<U256>().unwrap())
     }
 
-    pub fn transfer(&mut self, recipient: Key, amount: U256, sender: Sender) {
+    pub fn user_reward_per_token_paid(&self, account: Key) -> Option<U256> {
+        let item_key = base64::encode(&account.to_bytes().unwrap());
+
+        let key = Key::Hash(self.contract_hash().value());
+        let value = self
+            .context
+            .query_dictionary_item(key, Some(USER_REWARD_PER_TOKEN_PAID_KEY_NAME.to_string()), item_key)
+            .ok()?;
+
+        Some(value.into_t::<U256>().unwrap())
+    }
+
+    pub fn stake(&mut self, amount: U256, sender: Sender) {
         self.call(
             sender,
-            consts::TRANSFER_ENTRY_POINT_NAME,
+            STAKE_ENTRY_POINT_NAME,
             runtime_args! {
-                consts::RECIPIENT_RUNTIME_ARG_NAME => recipient,
-                consts::AMOUNT_RUNTIME_ARG_NAME => amount
+                AMOUNT_KEY_NAME => amount
             },
         );
     }
 
-    pub fn approve(&mut self, spender: Key, amount: U256, sender: Sender) {
+    pub fn withdraw(&mut self, amount: U256, sender: Sender) {
         self.call(
             sender,
-            consts::APPROVE_ENTRY_POINT_NAME,
+            WITHDRAW_ENTRY_POINT_NAME,
             runtime_args! {
-                consts::SPENDER_RUNTIME_ARG_NAME => spender,
-                consts::AMOUNT_RUNTIME_ARG_NAME => amount
+                AMOUNT_KEY_NAME => amount
             },
         );
     }
 
-    pub fn transfer_from(&mut self, owner: Key, recipient: Key, amount: U256, sender: Sender) {
+    pub fn get_reward(&mut self, sender: Sender) {
         self.call(
             sender,
-            consts::TRANSFER_FROM_ENTRY_POINT_NAME,
-            runtime_args! {
-                consts::OWNER_RUNTIME_ARG_NAME => owner,
-                consts::RECIPIENT_RUNTIME_ARG_NAME => recipient,
-                consts::AMOUNT_RUNTIME_ARG_NAME => amount
-            },
+            GET_REWARD_ENTRY_POINT_NAME,
+            runtime_args! {},
         );
     }
 }

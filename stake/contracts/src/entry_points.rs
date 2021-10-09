@@ -6,15 +6,14 @@ use crate::constants::{
 };
 
 use casper_types::{
-    URef, U512, CLType, CLTyped, EntryPoint, EntryPointAccess, EntryPointType, EntryPoints, Parameter,
+    U256, CLType, CLTyped, EntryPoint, EntryPointAccess, EntryPointType, EntryPoints, Parameter,
 };
-use casper_erc20::Address;
 
 fn stake() -> EntryPoint {
     EntryPoint::new(
         String::from(STAKE_ENTRY_POINT_NAME),
         vec![
-            Parameter::new(AMOUNT_KEY_NAME, U512::cl_type()),
+            Parameter::new(AMOUNT_KEY_NAME, U256::cl_type()),
         ],
         CLType::Unit,
         EntryPointAccess::Public,
@@ -26,7 +25,7 @@ fn withdraw() -> EntryPoint {
     EntryPoint::new(
         String::from(WITHDRAW_ENTRY_POINT_NAME),
         vec![
-            Parameter::new(AMOUNT_KEY_NAME, U512::cl_type()),
+            Parameter::new(AMOUNT_KEY_NAME, U256::cl_type()),
         ],
         CLType::Unit,
         EntryPointAccess::Public,

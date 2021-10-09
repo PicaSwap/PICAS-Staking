@@ -77,7 +77,7 @@ pub(crate) fn dictionary_write(dictionary_uref: URef, address: Address, amount: 
 
 /// Creates a dictionary item key for a dictionary item.
 #[no_mangle]
-pub(crate) fn make_dictionary_item_key(owner: Address) -> String {
+fn make_dictionary_item_key(owner: Address) -> String {
     let preimage = owner.to_bytes().unwrap_or_revert();
     // NOTE: As for now dictionary item keys are limited to 64 characters only. Instead of using
     // hashing (which will effectively hash a hash) we'll use base64. Preimage is about 33 bytes for
