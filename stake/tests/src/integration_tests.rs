@@ -38,13 +38,15 @@ mod tests {
         let mut fixture = TestFixture::install_contract();
 
         let owner = fixture.bob;
-        let spender = fixture.staking_contract_hash;
-        let recipient = fixture.staking_contract_hash;
+        let spender = fixture.staking_contract_package_hash;
+        let recipient = fixture.staking_contract_package_hash;
         
         let owner_balance_before = fixture
             .stake_balance_of(Key::from(owner))
             .expect("owner should have balance");
         
+
+        //Spende is a ContractPackageHash
         fixture.approve_stake_token(Key::from(spender), approve_amount, Sender(owner));
         assert_eq!(
             fixture.allowance_stake_token(Key::from(owner), Key::from(spender)),
@@ -53,11 +55,26 @@ mod tests {
 
         // We stake tokens
         fixture.stake(stake_amount, Sender(owner));
+        /*
         println!("erc20_contract_key {}", fixture.get_debug_msg("debug_msg1").as_str());
+        
         println!("erc20_contract_uref {}", fixture.get_debug_msg("debug_msg2").as_str());
+        
+        //hash-xxx
         println!("erc20_contract_hash_key {}", fixture.get_debug_msg("debug_msg3").as_str());
-        //println!(fixture.get_debug_msg("debug_msg4"));
+        
+        //contract-xxx
         println!("erc20_contract_hash {}", fixture.get_debug_msg("debug_msg5").as_str());
+
+        //staker
+        println!("staker {}", fixture.get_debug_msg("debug_msg6").as_str());
+        //stake_contract
+        println!("stake_contract {}", fixture.get_debug_msg("debug_msg7").as_str());
+
+        println!("spender {}", spender);
+        println!("owner {}", owner);
+
+        */
 
         // We don't need to transfer
         /*fixture.transfer_from(

@@ -6,7 +6,7 @@ use crate::constants::{
 };
 
 use casper_types::{
-    U256, CLType, CLTyped, EntryPoint, EntryPointAccess, EntryPointType, EntryPoints, Parameter,
+    U256, CLType, CLTyped, EntryPoint, EntryPointAccess, EntryPointType, EntryPoints, Parameter, ContractPackageHash,
 };
 
 fn stake() -> EntryPoint {
@@ -43,11 +43,24 @@ fn get_reward() -> EntryPoint {
     )
 }
 
+fn init() -> EntryPoint {
+    EntryPoint::new(
+        String::from("init"),
+        vec![
+            Parameter::new("contract_hash", ContractPackageHash::cl_type()),
+        ],
+        CLType::Unit,
+        EntryPointAccess::Public,
+        EntryPointType::Contract,
+    )
+}
+
 /// Returns the default set of ERC20 token entry points.
 pub(crate) fn default() -> EntryPoints {
     let mut entry_points = EntryPoints::new();
     entry_points.add_entry_point(stake());
     entry_points.add_entry_point(withdraw());
     entry_points.add_entry_point(get_reward());
+    entry_points.add_entry_point(init());
     entry_points
 }

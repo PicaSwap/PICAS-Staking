@@ -5,7 +5,7 @@ use blake2::{
 use casper_engine_test_support::{Code, SessionBuilder, TestContext, TestContextBuilder};
 use casper_erc20::constants as consts;
 use casper_types::{
-    account::AccountHash,
+    account::AccountHash, ContractPackageHash,
     bytesrepr::{FromBytes, ToBytes},
     runtime_args, AsymmetricType, CLTyped, ContractHash, Key, PublicKey, RuntimeArgs, U256, U512,
 };
@@ -57,7 +57,8 @@ pub struct TestFixture {
     pub reward_contract_hash: ContractHash,
     pub stake_contract_hash: ContractHash,
     pub contract_name: String,
-    pub staking_contract_hash: ContractHash
+    pub staking_contract_hash: ContractHash,
+    pub staking_contract_package_hash: ContractPackageHash
 }
 
 impl TestFixture {
@@ -123,7 +124,7 @@ impl TestFixture {
         context.run(session);
 
         let staking_contract_hash: ContractHash = context.get_account(ali.to_account_hash()).unwrap().named_keys().get(CONTRACT_NAME).unwrap().normalize().into_hash().unwrap().into();
-
+        
         TestFixture {
             context,
             ali: ali.to_account_hash(),
@@ -132,7 +133,8 @@ impl TestFixture {
             stake_contract_hash: stake_contract_hash,
             reward_contract_hash: reward_contract_hash,
             contract_name: CONTRACT_NAME.to_string(),
-            staking_contract_hash: staking_contract_hash
+            staking_contract_hash: staking_contract_hash,
+            staking_contract_package_hash: ContractPackageHash::new(staking_contract_hash.value())
         }
     }
 

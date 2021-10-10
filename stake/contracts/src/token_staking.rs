@@ -30,7 +30,7 @@ use casper_erc20::{ Error, Address::Account, Address,
 
 use casper_contract::{contract_api::{runtime, storage}, unwrap_or_revert::UnwrapOrRevert};
 use casper_types::{
-    contracts::{NamedKeys}, U256, ContractHash, Key,
+    contracts::{NamedKeys}, U256, ContractHash, Key, ContractPackageHash,
     URef, RuntimeArgs, runtime_args, account::AccountHash, HashAddr};
 
 #[no_mangle]
@@ -59,6 +59,29 @@ fn call() {
     // ContractHash is saved into 'named keys' of 'Deployer account'
     // Need to be &str
     runtime::put_key(staking_contract_name.as_str(), Key::from(contract_hash));
+
+    //let _: () = runtime::call_contract(contract_hash, "init", RuntimeArgs::new());
+
+    //let key: Key = runtime::get_key(CONTRACT_KEY_NAME).unwrap_or_revert();
+    //let hash: HashAddr = key.into_hash().unwrap_or_revert();
+    //let contract_hash = ContractHash::new(hash);
+    let contract_package_hash : ContractPackageHash = ContractPackageHash::new(contract_hash.value());
+    let _: () = runtime::call_contract(contract_hash, "init", runtime_args!{
+        "contract_hash" => contract_package_hash
+    });
+}
+
+#[no_mangle]
+pub extern "C" fn init() {
+let value: Option<bool> = get_key("initialized");
+match value {
+    Some(_) => {},
+    None => {
+        let contract_hash :  ContractPackageHash = runtime::get_named_arg("contract_hash");
+        set_key("contract_hash", contract_hash);
+        set_key("initialized", true);
+    },
+}
 }
 
 #[no_mangle]
@@ -75,7 +98,7 @@ pub extern "C" fn stake() {
     let rewards_key: Key = runtime::get_key(REWARDS_KEY_NAME).unwrap_or_revert();
     let balances_uref: URef = balances_key.into_uref().unwrap_or_revert();
     let rewards_uref: URef = rewards_key.into_uref().unwrap_or_revert();
-    let stake_contract: AccountHash = runtime::get_caller();
+    //let stake_contract: AccountHash = runtime::get_caller();
     
     update_reward(staker, balances_uref, rewards_uref);
     
@@ -88,8 +111,9 @@ pub extern "C" fn stake() {
     // Transfer `amount` of Stake Token from caller to the stake contract
     erc20_transfer_from(
         STAKE_TOKEN_HASH_KEY_NAME,
-        Key::from(staker),
-        Key::from(stake_contract),
+        staker,
+        //Key::from(stake_contract),
+        //Address::from(stake_contract),
         amount
     );
 
@@ -293,8 +317,8 @@ fn named_key_sub(amount: U256, key_name: &str) {
 
 fn erc20_transfer_from(
     erc20_hash_key_name: &str,
-    staker: Key,
-    stake_contract: Key,
+    staker: Address,
+    //stake_contract: Address,
     amount: U256
 ) {
     let erc20_contract_key: Key = runtime::get_key(erc20_hash_key_name).unwrap_or_revert();
@@ -304,24 +328,26 @@ fn erc20_transfer_from(
 
     let erc20_contract_hash_addr: HashAddr  = erc20_contract_hash_key.into_hash().unwrap_or_revert();
     let erc20_contract_hash: ContractHash = ContractHash::new(erc20_contract_hash_addr);
-    set_key("debug_msg1", erc20_contract_key.to_formatted_string());
-    //let tv = format!("{}", r)
-    set_key("debug_msg2", erc20_contract_uref.to_formatted_string());
-    //let tv = format!("{}", r)
-    set_key("debug_msg3", erc20_contract_hash_key.to_formatted_string());
-    //let tv = format!("{}", erc20_contract_hash_addr)
-    //set_key("debug_msg4", erc20_contract_hash_addr.as_contract_package_hash().to_formatted_string());
-    set_key("debug_msg5", erc20_contract_hash.to_formatted_string());
-
-    runtime::call_contract(erc20_contract_hash, SYMBOL_RUNTIME_ARG_NAME, runtime_args!{
-    })
+    
     /*
+    set_key("debug_msg1", erc20_contract_key.to_formatted_string());
+    set_key("debug_msg2", erc20_contract_uref.to_formatted_string());
+    set_key("debug_msg3", erc20_contract_hash_key.to_formatted_string());
+    set_key("debug_msg5", erc20_contract_hash.to_formatted_string());
+    
+    set_key("debug_msg6", staker.as_account_hash().unwrap().to_formatted_string());
+    set_key("debug_msg7", stake_contract.as_account_hash().unwrap().to_formatted_string());
+*/
+
+    //let _: () = runtime::call_contract(erc20_contract_hash, SYMBOL_RUNTIME_ARG_NAME, RuntimeArgs::new());
+    let stake_contract_package_hash: ContractPackageHash = get_key("contract_hash").unwrap_or_revert();
+    let stake_contract: Address = Address::from(stake_contract_package_hash);
+
     runtime::call_contract(erc20_contract_hash, TRANSFER_FROM_ENTRY_POINT_NAME, runtime_args!{
         OWNER_RUNTIME_ARG_NAME => staker,
         RECIPIENT_RUNTIME_ARG_NAME => stake_contract,
         AMOUNT_RUNTIME_ARG_NAME => amount
     })
-    */
 }
 
 fn erc20_transfer(
