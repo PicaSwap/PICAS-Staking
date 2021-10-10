@@ -31,7 +31,13 @@ const GET_REWARD_ENTRY_POINT_NAME: &str = "get_reward";
 const AMOUNT_KEY_NAME:  &str = "amount";
 
 const CONTRACT_FILE: &str = "staking_contract.wasm";
-const CONTRACT_KEY_NAME: &str = "stake_wcspr_reward_picas";
+const CONTRACT_NAME: &str = "stake_wcspr_reward_picas";
+
+const STAKE_CONTRACT_FILE: &str = "wcspr.wasm";
+const STAKE_CONTRACT_KEY_NAME: &str = "wcspr_token";
+
+const REWARD_CONTRACT_FILE: &str = "picas_token.wasm";
+const REWARD_CONTRACT_KEY_NAME: &str = "picas_token";
 
 
 fn blake2b256(item_key_string: &[u8]) -> Box<[u8]> {
@@ -51,25 +57,6 @@ pub struct TestFixture {
 }
 
 impl TestFixture {
-    //let stake_token: Key = Key::from_formatted_str("hash-d60beb45bdd2002e6e2581467f94196ec9cf4683c25cabe1ffefa4a14d2bb47b").unwrap();
-    //let reward_token: Key = Key::from_formatted_str("hash-d60beb45bdd2002e6e2581467f94196ec9cf4683c25cabe1ffefa4a14d2bb47b").unwrap();
-    //let reward_rate: U256 = U256::from(100000000000);
-    //let staking_contract_key_name: &'static str = "stake_wcspr_reward_picas";
-
-    //pub const STAKE_TOKEN: Key = stake_token;
-    //pub const REWARD_TOKEN: Key = reward_token;
-    //pub const REWARD_RATE: U256 = reward_rate;
-    //pub const STAKING_CONTRACT_KEY_NAME: &'static str = "stake_wcspr_reward_picas";
-
-    //pub const STAKE_TOKEN: Key = Key::from_formatted_str("hash-d60beb45bdd2002e6e2581467f94196ec9cf4683c25cabe1ffefa4a14d2bb47b").unwrap();
-    //pub const REWARD_TOKEN: Key = Key::from_formatted_str("hash-d60beb45bdd2002e6e2581467f94196ec9cf4683c25cabe1ffefa4a14d2bb47b").unwrap();
-    //pub const REWARD_RATE: U256 = U256::from(100000000000);
-    //pub const STAKING_CONTRACT_KEY_NAME: &'static str = "stake_wcspr_reward_picas";
-    //const TOKEN_TOTAL_SUPPLY_AS_U64: u64 = 1000;
-
-    //pub fn token_total_supply() -> U256 {
-    //  Self::TOKEN_TOTAL_SUPPLY_AS_U64.into()
-    //}
 
     pub fn install_contract() -> TestFixture {
         let ali = PublicKey::ed25519_from_bytes([3u8; 32]).unwrap();
@@ -81,41 +68,55 @@ impl TestFixture {
             .with_public_key(bob.clone(), U512::from(500_000_000_000_000_000u64))
             .build();
 
-        //Reward token
+        // Deploy Stake token
+        let session_code = Code::from(STAKE_CONTRACT_FILE);
+        let session_args = runtime_args! {
+            consts::NAME_RUNTIME_ARG_NAME => "Stake Token",
+            consts::SYMBOL_RUNTIME_ARG_NAME => "STAKE",
+            consts::DECIMALS_RUNTIME_ARG_NAME => 9 as u8,
+            consts::TOTAL_SUPPLY_RUNTIME_ARG_NAME => casper_types::U256::from(1000)
+        };
         let session = SessionBuilder::new(session_code, session_args)
             .with_address(ali.to_account_hash())
             .with_authorization_keys(&[ali.to_account_hash()])
             .build();
+        context.run(session);
 
-        //Stake token
+        // Deploy Reward token
+        let session_code = Code::from(REWARD_CONTRACT_FILE);
+        let session_args = runtime_args! {
+            consts::NAME_RUNTIME_ARG_NAME => "REWARD Token",
+            consts::SYMBOL_RUNTIME_ARG_NAME => "REWARD",
+            consts::DECIMALS_RUNTIME_ARG_NAME => 9 as u8,
+            consts::TOTAL_SUPPLY_RUNTIME_ARG_NAME => casper_types::U256::from(1000)
+        };
         let session = SessionBuilder::new(session_code, session_args)
             .with_address(ali.to_account_hash())
             .with_authorization_keys(&[ali.to_account_hash()])
             .build();
-        
-        let stake_token: Key = Key::from_formatted_str("hash-d60beb45bdd2002e6e2581467f94196ec9cf4683c25cabe1ffefa4a14d2bb47b").unwrap();
-        let reward_token: Key = Key::from_formatted_str("hash-d60beb45bdd2002e6e2581467f94196ec9cf4683c25cabe1ffefa4a14d2bb47b").unwrap();
-        let reward_rate: U256 = U256::from(100000000000);
-        let staking_contract_key_name: &'static str = "stake_wcspr_reward_picas";
+        context.run(session);
+
+        // Deploy Staking Contract
+
+        let reward_contract_hash: ContractHash = context.get_account(ali.to_account_hash()).unwrap().named_keys().get(REWARD_CONTRACT_KEY_NAME).unwrap().normalize().into_hash().unwrap().into();
+        let reward_token: Key = Key::from(reward_contract_hash);
+
+        let stake_contract_hash: ContractHash = context.get_account(ali.to_account_hash()).unwrap().named_keys().get(STAKE_CONTRACT_KEY_NAME).unwrap().normalize().into_hash().unwrap().into();
+        let stake_token: Key = Key::from(stake_contract_hash);
 
         let session_code = Code::from(CONTRACT_FILE);
         let session_args = runtime_args! {
-            //STAKING_CONTRACT_KEY_NAME => TestFixture::STAKING_CONTRACT_KEY_NAME,
-            //STAKE_TOKEN_HASH_KEY_NAME => TestFixture::STAKE_TOKEN,
-            //REWARD_TOKEN_HASH_KEY_NAME => TestFixture::REWARD_TOKEN,
-            //REWARD_RATE_KEY_NAME => TestFixture::REWARD_RATE
-            STAKING_CONTRACT_KEY_NAME => staking_contract_key_name,
             STAKE_TOKEN_HASH_KEY_NAME => stake_token,
             REWARD_TOKEN_HASH_KEY_NAME => reward_token,
-            REWARD_RATE_KEY_NAME => reward_rate
+            STAKING_CONTRACT_KEY_NAME => CONTRACT_NAME,
+            REWARD_RATE_KEY_NAME => U256::from(1000000)
         };
-
         let session = SessionBuilder::new(session_code, session_args)
             .with_address(ali.to_account_hash())
             .with_authorization_keys(&[ali.to_account_hash()])
             .build();
-
         context.run(session);
+
         TestFixture {
             context,
             ali: ali.to_account_hash(),
@@ -124,18 +125,7 @@ impl TestFixture {
         }
     }
 
-    fn contract_hash(&self) -> ContractHash {
-        self.context
-            .get_account(self.ali)
-            .unwrap()
-            .named_keys()
-            .get(CONTRACT_KEY_NAME)
-            .unwrap()
-            .normalize()
-            .into_hash()
-            .unwrap()
-            .into()
-    }
+    /*
 
     fn query_contract<T: CLTyped + FromBytes>(&self, name: &str) -> Option<T> {
         match self
@@ -260,4 +250,22 @@ impl TestFixture {
             runtime_args! {},
         );
     }
+    */
+}
+
+fn get_contract_hash(
+    context: casper_engine_test_support::TestContext,
+    account: AccountHash,
+    contract_key_name: &str
+) -> ContractHash {
+    context
+        .get_account(account)
+        .unwrap()
+        .named_keys()
+        .get(contract_key_name)
+        .unwrap()
+        .normalize()
+        .into_hash()
+        .unwrap()
+        .into()
 }

@@ -45,13 +45,20 @@ fn call() {
 
     // TODO Check that Reward Token and Stake Token are existing ERC20 contracts
 
-    let named_keys: NamedKeys = named_keys::default(staking_contract_name.clone(), stake_token_key, reward_token_key, reward_rate);
+    let named_keys: NamedKeys = named_keys::default(
+        staking_contract_name.clone(),
+        stake_token_key,
+        reward_token_key,
+        reward_rate
+    );
     
+    /*
     let (contract_hash, _version) =
             storage::new_locked_contract(entry_points::default(), Some(named_keys), None, None);
     
     // ContractHash is saved to owner's account named keys
     runtime::put_key(staking_contract_name.as_str(), Key::from(contract_hash));
+    */
     
 }
 

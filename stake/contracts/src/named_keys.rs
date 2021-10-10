@@ -1,3 +1,4 @@
+use casper_erc20::Address;
 use casper_types::{U256, URef, contracts::NamedKeys, Key, HashAddr, ContractHash};
 use alloc::string::{String, ToString};
 use casper_contract::{
@@ -88,8 +89,6 @@ pub fn default(
         Key::from(total_supply_uref)
     };
 
-    let caller = get_immediate_caller_address().unwrap_or_revert();
-    
     // We need to create dictionaries:
 
     // 1. "user_reward_per_token_paid"
@@ -107,7 +106,7 @@ pub fn default(
     let rewards_dictionary_key = {
         
         // Sets up initial balance for the caller - either an account, or a contract.
-        dictionary_write(rewards_dictionary_uref, caller, total_supply);
+        //dictionary_write(rewards_dictionary_uref, caller, total_supply);
 
         runtime::remove_key(REWARDS_KEY_NAME);
 
@@ -120,7 +119,7 @@ pub fn default(
     let balances_dictionary_key = {
         
         // Sets up initial balance for the caller - either an account, or a contract.
-        dictionary_write(balances_dictionary_uref, caller, total_supply);
+        //dictionary_write(balances_dictionary_uref, caller, total_supply);
 
         runtime::remove_key(BALANCES_KEY_NAME);
 

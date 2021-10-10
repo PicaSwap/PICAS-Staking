@@ -8,6 +8,7 @@ build-staking:
 test: build-staking
 	mkdir -p tests/wasm
 	cp contracts/target/wasm32-unknown-unknown/release/staking_contract.wasm tests/wasm
+	cp tests/wasm_artifacts/* tests/wasm
 	cd tests && cargo test
 
 clippy:
