@@ -22,7 +22,7 @@ use crate::constants::{
 
 use alloc::string::String;
 
-use casper_erc20::{ Error, Address,
+use casper_erc20::{ Error, Address::Account, Address,
     constants::{
         TRANSFER_ENTRY_POINT_NAME, TRANSFER_FROM_ENTRY_POINT_NAME, OWNER_RUNTIME_ARG_NAME,
         RECIPIENT_RUNTIME_ARG_NAME, AMOUNT_RUNTIME_ARG_NAME}
@@ -300,16 +300,18 @@ fn erc20_transfer_from(
     let erc20_contract_key: Key = runtime::get_key(erc20_hash_key_name).unwrap_or_revert();
     let erc20_contract_uref: URef = erc20_contract_key.into_uref().unwrap_or_revert();
     
+    let erc20_contract_key: Key =  storage::read(erc20_contract_uref).unwrap_or_revert().unwrap_or_revert();
+
     let _erc20_contract_hash: HashAddr  = erc20_contract_key.into_hash().unwrap_or_revert();
     let erc20_contract_hash: ContractHash = ContractHash::new(_erc20_contract_hash);
+
+    let stake_contract_address: Address = Address::from(stake_contract);
     
-    //let erc20_contract_hash: ContractHash = runtime::get_key(erc20_hash_key_name).unwrap_or_revert();
-    /*runtime::call_contract(erc20_contract_hash, TRANSFER_FROM_ENTRY_POINT_NAME, runtime_args!{
+    runtime::call_contract(erc20_contract_hash, TRANSFER_FROM_ENTRY_POINT_NAME, runtime_args!{
         OWNER_RUNTIME_ARG_NAME => staker,
         RECIPIENT_RUNTIME_ARG_NAME => stake_contract,
         AMOUNT_RUNTIME_ARG_NAME => amount
     })
-    */
 }
 
 fn erc20_transfer(
