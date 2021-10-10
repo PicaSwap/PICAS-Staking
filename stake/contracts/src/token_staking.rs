@@ -52,14 +52,11 @@ fn call() {
         reward_rate
     );
     
-    /*
     let (contract_hash, _version) =
             storage::new_locked_contract(entry_points::default(), Some(named_keys), None, None);
     
     // ContractHash is saved to owner's account named keys
     runtime::put_key(staking_contract_name.as_str(), Key::from(contract_hash));
-    */
-    
 }
 
 #[no_mangle]
