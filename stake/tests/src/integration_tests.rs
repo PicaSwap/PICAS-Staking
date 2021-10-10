@@ -53,6 +53,11 @@ mod tests {
 
         // We stake tokens
         fixture.stake(stake_amount, Sender(owner));
+        println!("erc20_contract_key {}", fixture.get_debug_msg("debug_msg1").as_str());
+        println!("erc20_contract_uref {}", fixture.get_debug_msg("debug_msg2").as_str());
+        println!("erc20_contract_hash_key {}", fixture.get_debug_msg("debug_msg3").as_str());
+        //println!(fixture.get_debug_msg("debug_msg4"));
+        println!("erc20_contract_hash {}", fixture.get_debug_msg("debug_msg5").as_str());
 
         // We don't need to transfer
         /*fixture.transfer_from(

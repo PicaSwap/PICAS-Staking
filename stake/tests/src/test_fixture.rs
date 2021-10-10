@@ -185,6 +185,11 @@ impl TestFixture {
         self.query_contract(TOTAL_SUPPLY_KEY_NAME)
             .unwrap()
     }
+
+    pub fn get_debug_msg(&self, msg: &str) -> String {
+        self.query_contract(msg)
+            .unwrap()
+    }
     
     fn call(&mut self, sender: Sender, contract_hash: ContractHash, method: &str, args: RuntimeArgs) {
         let Sender(address) = sender;

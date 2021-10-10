@@ -9,7 +9,7 @@ test: build-staking
 	mkdir -p tests/wasm
 	cp contracts/target/wasm32-unknown-unknown/release/staking_contract.wasm tests/wasm
 	cp tests/wasm_artifacts/* tests/wasm
-	cd tests && cargo test
+	cd tests && cargo test -- --show-output
 
 clippy:
 	cd contracts && cargo clippy --all-targets -- -D warnings
