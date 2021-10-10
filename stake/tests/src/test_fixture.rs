@@ -54,6 +54,8 @@ pub struct TestFixture {
     pub ali: AccountHash,
     pub bob: AccountHash,
     pub joe: AccountHash,
+    pub reward_contract_hash: ContractHash,
+    pub stake_contract_hash: ContractHash,
 }
 
 impl TestFixture {
@@ -122,15 +124,15 @@ impl TestFixture {
             ali: ali.to_account_hash(),
             bob: bob.to_account_hash(),
             joe: joe.to_account_hash(),
+            stake_contract_hash: stake_contract_hash,
+            reward_contract_hash: reward_contract_hash,
         }
     }
-
-    /*
 
     fn query_contract<T: CLTyped + FromBytes>(&self, name: &str) -> Option<T> {
         match self
             .context
-            .query(self.ali, &[CONTRACT_KEY_NAME.to_string(), name.to_string()])
+            .query(self.ali, &[CONTRACT_NAME.to_string(), name.to_string()])
         {
             Err(_) => None,
             Ok(maybe_value) => {
@@ -142,6 +144,7 @@ impl TestFixture {
         }
     }
 
+    /*
     fn call(&mut self, sender: Sender, method: &str, args: RuntimeArgs) {
         let Sender(address) = sender;
         let code = Code::Hash(self.contract_hash().value(), method.to_string());
@@ -151,6 +154,7 @@ impl TestFixture {
             .build();
         self.context.run(session);
     }
+    */
 
     pub fn staking_contract_name(&self) -> String {
         self.query_contract(STAKING_CONTRACT_KEY_NAME)
@@ -186,6 +190,7 @@ impl TestFixture {
         self.query_contract(TOTAL_SUPPLY_KEY_NAME)
             .unwrap()
     }
+    /*
 
     pub fn balance(&self, account: Key) -> Option<U256> {
         let item_key = base64::encode(&account.to_bytes().unwrap());
