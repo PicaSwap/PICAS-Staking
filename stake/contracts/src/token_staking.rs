@@ -31,7 +31,7 @@ use casper_erc20::{ Error, Address,
 use casper_contract::{contract_api::{runtime, storage}, unwrap_or_revert::UnwrapOrRevert};
 use casper_types::{
     contracts::{NamedKeys}, U256, ContractHash, Key,
-    URef, RuntimeArgs, runtime_args, account::AccountHash};
+    URef, RuntimeArgs, runtime_args, account::AccountHash, HashAddr};
 
 #[no_mangle]
 fn call() {
@@ -52,10 +52,12 @@ fn call() {
         reward_rate
     );
     
+    // We store contract on-chain
     let (contract_hash, _version) =
             storage::new_locked_contract(entry_points::default(), Some(named_keys), None, None);
     
-    // ContractHash is saved to owner's account named keys
+    // ContractHash is saved into 'named keys' of 'Deployer account'
+    // Need to be &str
     runtime::put_key(staking_contract_name.as_str(), Key::from(contract_hash));
 }
 
@@ -69,10 +71,12 @@ pub extern "C" fn stake() {
     let amount: U256 = runtime::get_named_arg(AMOUNT_KEY_NAME);
 
     let staker = get_immediate_caller_address().unwrap_or_revert();
-    let balances_uref = get_key(BALANCES_KEY_NAME).unwrap_or_revert();
-    let rewards_uref = get_key(REWARDS_KEY_NAME).unwrap_or_revert();
+    let balances_key: Key = runtime::get_key(BALANCES_KEY_NAME).unwrap_or_revert();
+    let rewards_key: Key = runtime::get_key(REWARDS_KEY_NAME).unwrap_or_revert();
+    let balances_uref: URef = balances_key.into_uref().unwrap_or_revert();
+    let rewards_uref: URef = rewards_key.into_uref().unwrap_or_revert();
     let stake_contract: AccountHash = runtime::get_caller();
-
+    
     update_reward(staker, balances_uref, rewards_uref);
     
     // update total_supply
@@ -152,7 +156,8 @@ pub extern "C" fn get_reward() {
  ) {
     
     let current_block_time: U256 = U256::from(u64::from(runtime::get_blocktime()));
-    let user_reward_per_token_paid_uref: URef = get_key(USER_REWARD_PER_TOKEN_PAID_KEY_NAME).unwrap_or_revert();
+    let user_reward_per_token_paid_key: Key = runtime::get_key(USER_REWARD_PER_TOKEN_PAID_KEY_NAME).unwrap_or_revert();
+    let user_reward_per_token_paid_uref: URef = user_reward_per_token_paid_key.into_uref().unwrap_or_revert();
     let user_reward_per_token_paid: U256 = dictionary_read(user_reward_per_token_paid_uref, staker);
     
     // update reward_per_token_stored
@@ -292,12 +297,19 @@ fn erc20_transfer_from(
     stake_contract: AccountHash,
     amount: U256
 ) {
-    let erc20_contract_hash: ContractHash = get_key(erc20_hash_key_name).unwrap_or_revert();
-    runtime::call_contract(erc20_contract_hash, TRANSFER_FROM_ENTRY_POINT_NAME, runtime_args!{
+    let erc20_contract_key: Key = runtime::get_key(erc20_hash_key_name).unwrap_or_revert();
+    let erc20_contract_uref: URef = erc20_contract_key.into_uref().unwrap_or_revert();
+    
+    let _erc20_contract_hash: HashAddr  = erc20_contract_key.into_hash().unwrap_or_revert();
+    let erc20_contract_hash: ContractHash = ContractHash::new(_erc20_contract_hash);
+    
+    //let erc20_contract_hash: ContractHash = runtime::get_key(erc20_hash_key_name).unwrap_or_revert();
+    /*runtime::call_contract(erc20_contract_hash, TRANSFER_FROM_ENTRY_POINT_NAME, runtime_args!{
         OWNER_RUNTIME_ARG_NAME => staker,
         RECIPIENT_RUNTIME_ARG_NAME => stake_contract,
         AMOUNT_RUNTIME_ARG_NAME => amount
     })
+    */
 }
 
 fn erc20_transfer(

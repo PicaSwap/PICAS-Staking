@@ -16,8 +16,8 @@ use crate::helpers::{ dictionary_write, get_immediate_caller_address };
 
 pub fn default(
     staking_contract_name: String,
-    stake_token_key: Key,
-    reward_token_key: Key,
+    stake_token_hash_key: Key,
+    reward_token_hash_key: Key,
     reward_rate: U256
             ) -> NamedKeys {
     
@@ -37,13 +37,13 @@ pub fn default(
     // as a Key value
     // example: -a "wcspr_contract_hash:key='hash-ca52b10cd3170652275d2ba16bbd6e3a48ac7098a3835feb314da1d0a372bf02'"
 
-    let stake_token_hash_key = {
-        let stake_token_uref = storage::new_uref(stake_token_key).into_read();
+    let stake_token_key = {
+        let stake_token_uref = storage::new_uref(stake_token_hash_key).into_read();
         Key::from(stake_token_uref)
     };
 
-    let reward_token_hash_key = {
-        let reward_token_uref: URef = storage::new_uref(reward_token_key).into_read();
+    let reward_token_key = {
+        let reward_token_uref: URef = storage::new_uref(reward_token_hash_key).into_read();
         Key::from(reward_token_uref)
     };
 
@@ -90,7 +90,7 @@ pub fn default(
     // Right side of equasion p = sum(t,0,a-1){ R / L(t)}
     let user_reward_per_token_paid_uref = storage::new_dictionary(USER_REWARD_PER_TOKEN_PAID_KEY_NAME).unwrap_or_revert();
     let user_reward_per_token_paid_key = {
-        runtime::remove_key(USER_REWARD_PER_TOKEN_PAID_KEY_NAME);
+        //runtime::remove_key(USER_REWARD_PER_TOKEN_PAID_KEY_NAME);
         Key::from(user_reward_per_token_paid_uref)
     };
 
@@ -103,7 +103,7 @@ pub fn default(
         // Sets up initial balance for the caller - either an account, or a contract.
         //dictionary_write(rewards_dictionary_uref, caller, total_supply);
 
-        runtime::remove_key(REWARDS_KEY_NAME);
+        //runtime::remove_key(REWARDS_KEY_NAME);
 
         Key::from(rewards_dictionary_uref)
     };
@@ -116,7 +116,7 @@ pub fn default(
         // Sets up initial balance for the caller - either an account, or a contract.
         //dictionary_write(balances_dictionary_uref, caller, total_supply);
 
-        runtime::remove_key(BALANCES_KEY_NAME);
+        //runtime::remove_key(BALANCES_KEY_NAME);
 
         Key::from(balances_dictionary_uref)
     };
@@ -124,8 +124,8 @@ pub fn default(
     // We need to put the contract on-chain and describe entry_points
 
     named_keys.insert(STAKING_CONTRACT_KEY_NAME.to_string(), staking_contract_name_key);
-    named_keys.insert(STAKE_TOKEN_HASH_KEY_NAME.to_string(), stake_token_hash_key);
-    named_keys.insert(REWARD_TOKEN_HASH_KEY_NAME.to_string(), reward_token_hash_key);
+    named_keys.insert(STAKE_TOKEN_HASH_KEY_NAME.to_string(), stake_token_key);
+    named_keys.insert(REWARD_TOKEN_HASH_KEY_NAME.to_string(), reward_token_key);
     named_keys.insert(REWARD_RATE_KEY_NAME.to_string(), reward_rate_key);
     named_keys.insert(LAST_UPDATE_KEY_NAME.to_string(), last_update_time_key);
     named_keys.insert(REWARD_PER_TOKEN_STORED_KEY_NAME.to_string(), reward_per_token_stored_key);
