@@ -12,8 +12,8 @@ mod tests {
         let fixture = TestFixture::install_contract();
 
         assert_eq!(fixture.reward_rate(), U256::from(1000000));
-        /*
         assert_eq!(fixture.stake_token_hash(), Key::from(fixture.stake_contract_hash));
+        /*
         assert_eq!(fixture.reward_token_hash(), Key::from(fixture.reward_contract_hash));
         */
 

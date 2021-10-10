@@ -36,19 +36,14 @@ pub fn default(
     // We request to pass hash of a erc20 token's contracts
     // as a Key value
     // example: -a "wcspr_contract_hash:key='hash-ca52b10cd3170652275d2ba16bbd6e3a48ac7098a3835feb314da1d0a372bf02'"
-    let stake_token_hash_addr: HashAddr  = stake_token_key.into_hash().unwrap_or_revert();
-    let reward_token_hash_addr: HashAddr  = reward_token_key.into_hash().unwrap_or_revert();
-    // ContractHash is [u8; 32]
-    let stake_token_hash: ContractHash = ContractHash::new(stake_token_hash_addr);
-    let reward_token_hash: ContractHash = ContractHash::new(reward_token_hash_addr);
 
     let stake_token_hash_key = {
-        let stake_token_uref = storage::new_uref(stake_token_hash).into_read();
+        let stake_token_uref = storage::new_uref(stake_token_key).into_read();
         Key::from(stake_token_uref)
     };
 
     let reward_token_hash_key = {
-        let reward_token_uref = storage::new_uref(reward_token_hash).into_read();
+        let reward_token_uref: URef = storage::new_uref(reward_token_key).into_read();
         Key::from(reward_token_uref)
     };
 
