@@ -9,7 +9,6 @@ use casper_types::{
     bytesrepr::{FromBytes, ToBytes},
     runtime_args, AsymmetricType, CLTyped, ContractHash, Key, PublicKey, RuntimeArgs, U256, U512,
 };
-use casper_contract::contract_api::unwrap_or_revert::UnwrapOrRevert;
 
 //#[path = "././stake/src/constants.rs"]
 //mod constants;
@@ -52,10 +51,20 @@ pub struct TestFixture {
 }
 
 impl TestFixture {
-    pub const STAKE_TOKEN: Key = Key::from_formatted_str("hash-d60beb45bdd2002e6e2581467f94196ec9cf4683c25cabe1ffefa4a14d2bb47b").unwrap();
-    pub const REWARD_TOKEN: Key = Key::from_formatted_str("hash-d60beb45bdd2002e6e2581467f94196ec9cf4683c25cabe1ffefa4a14d2bb47b").unwrap();
-    pub const REWARD_RATE: U256 = U256::from(100000000000);
-    pub const STAKING_CONTRACT_KEY_NAME: &'static str = "stake_wcspr_reward_picas";
+    //let stake_token: Key = Key::from_formatted_str("hash-d60beb45bdd2002e6e2581467f94196ec9cf4683c25cabe1ffefa4a14d2bb47b").unwrap();
+    //let reward_token: Key = Key::from_formatted_str("hash-d60beb45bdd2002e6e2581467f94196ec9cf4683c25cabe1ffefa4a14d2bb47b").unwrap();
+    //let reward_rate: U256 = U256::from(100000000000);
+    //let staking_contract_key_name: &'static str = "stake_wcspr_reward_picas";
+
+    //pub const STAKE_TOKEN: Key = stake_token;
+    //pub const REWARD_TOKEN: Key = reward_token;
+    //pub const REWARD_RATE: U256 = reward_rate;
+    //pub const STAKING_CONTRACT_KEY_NAME: &'static str = "stake_wcspr_reward_picas";
+
+    //pub const STAKE_TOKEN: Key = Key::from_formatted_str("hash-d60beb45bdd2002e6e2581467f94196ec9cf4683c25cabe1ffefa4a14d2bb47b").unwrap();
+    //pub const REWARD_TOKEN: Key = Key::from_formatted_str("hash-d60beb45bdd2002e6e2581467f94196ec9cf4683c25cabe1ffefa4a14d2bb47b").unwrap();
+    //pub const REWARD_RATE: U256 = U256::from(100000000000);
+    //pub const STAKING_CONTRACT_KEY_NAME: &'static str = "stake_wcspr_reward_picas";
     //const TOKEN_TOTAL_SUPPLY_AS_U64: u64 = 1000;
 
     //pub fn token_total_supply() -> U256 {
@@ -72,12 +81,33 @@ impl TestFixture {
             .with_public_key(bob.clone(), U512::from(500_000_000_000_000_000u64))
             .build();
 
+        //Reward token
+        let session = SessionBuilder::new(session_code, session_args)
+            .with_address(ali.to_account_hash())
+            .with_authorization_keys(&[ali.to_account_hash()])
+            .build();
+
+        //Stake token
+        let session = SessionBuilder::new(session_code, session_args)
+            .with_address(ali.to_account_hash())
+            .with_authorization_keys(&[ali.to_account_hash()])
+            .build();
+        
+        let stake_token: Key = Key::from_formatted_str("hash-d60beb45bdd2002e6e2581467f94196ec9cf4683c25cabe1ffefa4a14d2bb47b").unwrap();
+        let reward_token: Key = Key::from_formatted_str("hash-d60beb45bdd2002e6e2581467f94196ec9cf4683c25cabe1ffefa4a14d2bb47b").unwrap();
+        let reward_rate: U256 = U256::from(100000000000);
+        let staking_contract_key_name: &'static str = "stake_wcspr_reward_picas";
+
         let session_code = Code::from(CONTRACT_FILE);
         let session_args = runtime_args! {
-            STAKING_CONTRACT_KEY_NAME => TestFixture::STAKING_CONTRACT_KEY_NAME,
-            STAKE_TOKEN_HASH_KEY_NAME => TestFixture::STAKE_TOKEN,
-            REWARD_TOKEN_HASH_KEY_NAME => TestFixture::REWARD_TOKEN,
-            REWARD_RATE_KEY_NAME => TestFixture::REWARD_RATE
+            //STAKING_CONTRACT_KEY_NAME => TestFixture::STAKING_CONTRACT_KEY_NAME,
+            //STAKE_TOKEN_HASH_KEY_NAME => TestFixture::STAKE_TOKEN,
+            //REWARD_TOKEN_HASH_KEY_NAME => TestFixture::REWARD_TOKEN,
+            //REWARD_RATE_KEY_NAME => TestFixture::REWARD_RATE
+            STAKING_CONTRACT_KEY_NAME => staking_contract_key_name,
+            STAKE_TOKEN_HASH_KEY_NAME => stake_token,
+            REWARD_TOKEN_HASH_KEY_NAME => reward_token,
+            REWARD_RATE_KEY_NAME => reward_rate
         };
 
         let session = SessionBuilder::new(session_code, session_args)
