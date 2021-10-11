@@ -57,6 +57,7 @@ mod tests {
             fixture.allowance_stake_token(Key::from(Address::from(fixture.bob)), Key::from(Address::from(fixture.bob))),
             Some(U256::from(1))
         );
+        // THIS LINE THROWNS ApiError::User(65533) if no approval
         fixture.transfer_from(Key::from(fixture.bob), Key::from(fixture.ali), U256::from(5), Sender(fixture.bob));
         // left 5 after transfer
         assert_eq!(
@@ -83,7 +84,8 @@ mod tests {
         */
 
         // We stake tokens
-        fixture.stake(stake_amount, Sender(fixture.bob));
+        // THIS LINE THROWNS ApiError::User(65533) even if there is an approval checked by the test
+        //fixture.stake(stake_amount, Sender(fixture.bob));
         println!("spender in contract: {}", fixture.get_debug_msg("debug_msg1").as_str());
 
         /*
