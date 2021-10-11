@@ -117,7 +117,7 @@ impl TestFixture {
             STAKE_TOKEN_HASH_KEY_NAME => stake_token,
             REWARD_TOKEN_HASH_KEY_NAME => reward_token,
             STAKING_CONTRACT_KEY_NAME => CONTRACT_NAME.to_string(),
-            REWARD_RATE_KEY_NAME => U256::from(2000)
+            REWARD_RATE_KEY_NAME => U256::from(20)
         };
         let session = SessionBuilder::new(session_code, session_args)
             .with_address(ali.to_account_hash())

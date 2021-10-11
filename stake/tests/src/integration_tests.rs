@@ -12,7 +12,7 @@ mod tests {
     fn should_install() {
         let fixture = TestFixture::install_contract();
 
-        assert_eq!(fixture.reward_rate(), U256::from(2000));
+        assert_eq!(fixture.reward_rate(), U256::from(20));
         assert_eq!(fixture.stake_token_hash(), Key::from(fixture.stake_contract_hash));
         assert_eq!(fixture.reward_token_hash(), Key::from(fixture.reward_contract_hash));
         assert_eq!(fixture.staking_contract_name(), fixture.contract_name);
@@ -68,21 +68,20 @@ mod tests {
         let owner_balance_after_stake = fixture.stake_token_balance_of(Key::from(owner)).unwrap();
         assert_eq!(owner_balance_after_stake, owner_balance_before-stake_amount);
 
-        fixture.add_time(100);
+        let blocks: u64 = 10;
+        fixture.add_time(blocks);
 
         //fixture.withdrawal
         fixture.withdraw(stake_amount, sender);
-        /*
         
         //balance of bob is back to intial amount
         let owner_balance_after_withdrawal = fixture.stake_token_balance_of(Key::from(owner)).unwrap();
         assert_eq!(owner_balance_after_withdrawal, owner_balance_before);
 
         //balance of bob Reward tokens is > 0
-        let owner_balance_after_withdrawal = fixture.reward_token_balance_of(Key::from(owner)).unwrap();
-        assert_eq!(owner_balance_after_withdrawal, owner_balance_before);
-        */
-
+        let rewards_balance: U256 = fixture.reward_token_balance_of(Key::from(owner)).unwrap();
+        let expected_rewards_balance: U256 = U256::from(blocks) * fixture.reward_rate();
+        assert_eq!(rewards_balance, expected_rewards_balance);
     }
 }
 
