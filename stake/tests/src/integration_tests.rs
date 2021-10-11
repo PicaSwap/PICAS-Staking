@@ -19,9 +19,7 @@ mod tests {
         assert_eq!(fixture.reward_per_token_stored(), U256::from(0));
         assert_eq!(fixture.total_supply(), U256::from(0));
 
-        //Need to check last_update_time
-        // Cant' use runtime:get_blocktime()
-        //assert_eq!(fixture.last_update_time(), U256::from(u64::from(runtime::get_blocktime())));
+        // TODO Check 'Last_time_updated'
         
     }
     
@@ -71,14 +69,15 @@ mod tests {
         let blocks: u64 = 10;
         fixture.add_time(blocks);
 
-        //fixture.withdrawal
+        // Bob getting his reward 
+        // Bob withdraw all the 'Stake tokens' he staked
         fixture.withdraw(stake_amount, sender);
         
-        //balance of bob is back to intial amount
+        // Stake Token balance of bob is back to intial amount
         let owner_balance_after_withdrawal = fixture.stake_token_balance_of(Key::from(owner)).unwrap();
         assert_eq!(owner_balance_after_withdrawal, owner_balance_before);
 
-        //balance of bob Reward tokens is > 0
+        // Reward Token balance of bob Should be (reward_rate * time_passed)
         let rewards_balance: U256 = fixture.reward_token_balance_of(Key::from(owner)).unwrap();
         let expected_rewards_balance: U256 = U256::from(blocks) * fixture.reward_rate();
         assert_eq!(rewards_balance, expected_rewards_balance);

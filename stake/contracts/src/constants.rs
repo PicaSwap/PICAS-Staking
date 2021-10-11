@@ -32,6 +32,6 @@ pub const WITHDRAW_ENTRY_POINT_NAME: &str = "withdraw";
 
 pub const GET_REWARD_ENTRY_POINT_NAME: &str = "get_reward";
 
-// Variable
+// Runtime argument names
 
 pub const AMOUNT_KEY_NAME:  &str = "amount";

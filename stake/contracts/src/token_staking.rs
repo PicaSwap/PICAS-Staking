@@ -22,16 +22,15 @@ use crate::constants::{
 
 use alloc::string::String;
 
-use casper_erc20::{ Error, Address::Account, Address,
+use casper_erc20::{ Error, Address,
     constants::{
         TRANSFER_ENTRY_POINT_NAME, TRANSFER_FROM_ENTRY_POINT_NAME, OWNER_RUNTIME_ARG_NAME,
-        RECIPIENT_RUNTIME_ARG_NAME, AMOUNT_RUNTIME_ARG_NAME, SYMBOL_RUNTIME_ARG_NAME}
+        RECIPIENT_RUNTIME_ARG_NAME, AMOUNT_RUNTIME_ARG_NAME}
     };
 
-use casper_contract::{contract_api::{runtime, storage, system}, unwrap_or_revert::UnwrapOrRevert};
+use casper_contract::{contract_api::{runtime, storage}, unwrap_or_revert::UnwrapOrRevert};
 use casper_types::{
-    contracts::{NamedKeys}, U256, ContractHash, Key, ContractPackageHash,
-    URef, RuntimeArgs, runtime_args, account::AccountHash, HashAddr};
+    contracts::{NamedKeys}, U256, ContractHash, Key, URef, RuntimeArgs, runtime_args, HashAddr};
 
 #[no_mangle]
 fn call() {
@@ -68,8 +67,7 @@ fn call() {
 #[no_mangle]
 pub extern "C" fn stake() {
     
-    // TODO Frontend should call 'allowance' entry point of Stake token ERC20 contract
-    // Returns the amount of `owner`'s tokens allowed to be spent by `spender`.
+    // TODO Frontend should check 'allowance' of ERC20 'Stake token' contract for user
     // Let user to call 'approve' first, before staking
 
     let amount: U256 = runtime::get_named_arg(AMOUNT_KEY_NAME);
@@ -169,8 +167,7 @@ pub extern "C" fn get_reward() {
     
     // update last_update_time
     set_key(LAST_UPDATE_KEY_NAME, current_block_time);
-    //let last_update_time: BlockTime = runtime::get_blocktime().into_bytes();
-
+    
     // update reward amount of the staker
     dictionary_add(
         rewards_uref,
@@ -326,7 +323,6 @@ fn erc20_transfer(
     let erc20_contract_hash_addr: HashAddr  = erc20_contract_hash_key.into_hash().unwrap_or_revert();
     let erc20_contract_hash: ContractHash = ContractHash::new(erc20_contract_hash_addr);
  
-    // TODO: throwns insufficient balance because can not deposit
     runtime::call_contract(erc20_contract_hash, TRANSFER_ENTRY_POINT_NAME, runtime_args!{
         RECIPIENT_RUNTIME_ARG_NAME => staker,
         AMOUNT_RUNTIME_ARG_NAME => amount

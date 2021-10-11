@@ -11,11 +11,7 @@ use casper_types::{
     runtime_args, AsymmetricType, CLTyped, ContractHash, Key, PublicKey, RuntimeArgs, U256, U512,
 };
 
-//#[path = "././stake/src/constants.rs"]
-//mod constants;
-
-//use constants as consts;
-
+// TODO Connect constants from 'Staking contact' folder
 const STAKING_CONTRACT_KEY_NAME: &str = "staking_contract";
 const STAKE_TOKEN_HASH_KEY_NAME: &str = "stake_token_hash";
 const REWARD_TOKEN_HASH_KEY_NAME: &str = "reward_token_hash";
@@ -105,7 +101,6 @@ impl TestFixture {
         context.run(session);
 
         // Deploy Staking Contract
-
         let reward_contract_hash: ContractHash = context.get_account(ali.to_account_hash()).unwrap().named_keys().get(REWARD_CONTRACT_KEY_NAME).unwrap().normalize().into_hash().unwrap().into();
         let reward_token: Key = Key::from(reward_contract_hash);
 
@@ -200,11 +195,6 @@ impl TestFixture {
             .unwrap()
     }
 
-    pub fn get_debug_msg(&self, msg: &str) -> String {
-        self.query_contract(msg)
-            .unwrap()
-    }
-    
     fn call(&mut self, sender: Sender, contract_hash: ContractHash, method: &str, args: RuntimeArgs) {
         let Sender(address) = sender;
         let code = Code::Hash(contract_hash.value(), method.to_string());
@@ -251,8 +241,6 @@ impl TestFixture {
         Some(value.into_t::<U256>().unwrap())
     }
 
-    
-
     pub fn approve_stake_token(&mut self, spender: Address, amount: U256, sender: Sender) {
         self.call(
             sender,
@@ -286,19 +274,6 @@ impl TestFixture {
         Some(value.into_t::<U256>().unwrap())
     }
     
-    pub fn transfer_stake_token_from(&mut self, owner: Key, recipient: Key, amount: U256, sender: Sender) {
-        self.call(
-            sender,
-            self.stake_contract_hash,
-            consts::TRANSFER_FROM_ENTRY_POINT_NAME,
-            runtime_args! {
-                consts::OWNER_RUNTIME_ARG_NAME => owner,
-                consts::RECIPIENT_RUNTIME_ARG_NAME => recipient,
-                consts::AMOUNT_RUNTIME_ARG_NAME => amount
-            },
-        );
-    }
-
     pub fn transfer_reward_token(&mut self, recipient: Key, amount: U256, sender: Sender) {
         self.call(
             sender,
@@ -332,40 +307,10 @@ impl TestFixture {
     }
 
     /*
-    pub fn balance(&self, account: Key) -> Option<U256> {
-        let item_key = base64::encode(&account.to_bytes().unwrap());
-
-        let key = Key::Hash(self.contract_hash().value());
-        let value = self
-            .context
-            .query_dictionary_item(key, Some(BALANCES_KEY_NAME.to_string()), item_key)
-            .ok()?;
-
-        Some(value.into_t::<U256>().unwrap())
-    }
-
-    pub fn reward(&self, account: Key) -> Option<U256> {
-        let item_key = base64::encode(&account.to_bytes().unwrap());
-
-        let key = Key::Hash(self.contract_hash().value());
-        let value = self
-            .context
-            .query_dictionary_item(key, Some(REWARDS_KEY_NAME.to_string()), item_key)
-            .ok()?;
-
-        Some(value.into_t::<U256>().unwrap())
-    }
-
-    pub fn user_reward_per_token_paid(&self, account: Key) -> Option<U256> {
-        let item_key = base64::encode(&account.to_bytes().unwrap());
-
-        let key = Key::Hash(self.contract_hash().value());
-        let value = self
-            .context
-            .query_dictionary_item(key, Some(USER_REWARD_PER_TOKEN_PAID_KEY_NAME.to_string()), item_key)
-            .ok()?;
-
-        Some(value.into_t::<U256>().unwrap())
+    pub fn get_debug_msg(&self, msg: &str) -> String {
+        self.query_contract(msg)
+            .unwrap()
     }
     */
+
 }
