@@ -1,3 +1,4 @@
+use casper_erc20::Address;
 use blake2::{
     digest::{Update, VariableOutput},
     VarBlake2b,
@@ -226,7 +227,7 @@ impl TestFixture {
         Some(value.into_t::<U256>().unwrap())
     }
 
-    pub fn approve_stake_token(&mut self, spender: Key, amount: U256, sender: Sender) {
+    pub fn approve_stake_token(&mut self, spender: Address, amount: U256, sender: Sender) {
         self.call(
             sender,
             self.stake_contract_hash,
@@ -259,7 +260,6 @@ impl TestFixture {
         Some(value.into_t::<U256>().unwrap())
     }
     
-    /*
     pub fn transfer_from(&mut self, owner: Key, recipient: Key, amount: U256, sender: Sender) {
         self.call(
             sender,
@@ -272,7 +272,6 @@ impl TestFixture {
             },
         );
     }
-    */
 
     /*
     pub fn withdraw(&mut self, amount: U256, sender: Sender) {

@@ -4,6 +4,7 @@ mod test_fixture;
 #[cfg(test)]
 mod tests {
     use casper_types::{Key, U256};
+    use casper_erc20::{ Address };
 
     use crate::test_fixture::{Sender, TestFixture};
 
@@ -31,30 +32,60 @@ mod tests {
     fn should_stake() {
         
         // We approve 'Stake' tokens for 'Staker'
-        let approve_amount = U256::from(1000000);
-        let stake_amount = U256::from(500000);
+        let approve_amount = U256::from(10);
+        let stake_amount = U256::from(5);
         assert!(approve_amount > stake_amount);
 
         let mut fixture = TestFixture::install_contract();
 
         let owner = fixture.bob;
-        let spender = fixture.staking_contract_package_hash;
+        let spender: Address = Address::from(fixture.staking_contract_package_hash);
         let recipient = fixture.staking_contract_package_hash;
-        
-        let owner_balance_before = fixture
-            .stake_balance_of(Key::from(owner))
-            .expect("owner should have balance");
-        
 
-        //Spende is a ContractPackageHash
-        fixture.approve_stake_token(Key::from(spender), approve_amount, Sender(owner));
+        // check that owner has tokens
+        let owner_balance_before = fixture.stake_balance_of(Key::from(owner)).unwrap();
+        assert_eq!(owner_balance_before, U256::from(1000));
+        
+        // check spender has no tokens
+        //let spender_balance_before = fixture.stake_balance_of(Key::from(spender)).unwrap();
+        //assert_eq!(spender_balance_before, U256::from(1000));
+
+
+        // Check spending directly
+        fixture.approve_stake_token(Address::from(fixture.bob), U256::from(1), Sender(fixture.bob));
         assert_eq!(
-            fixture.allowance_stake_token(Key::from(owner), Key::from(spender)),
-            Some(approve_amount)
+            fixture.allowance_stake_token(Key::from(Address::from(fixture.bob)), Key::from(Address::from(fixture.bob))),
+            Some(U256::from(1))
+        );
+        fixture.transfer_from(Key::from(fixture.bob), Key::from(fixture.ali), U256::from(5), Sender(fixture.bob));
+        // left 5 after transfer
+        assert_eq!(
+            fixture.allowance_stake_token(Key::from(Address::from(fixture.bob)), Key::from(Address::from(fixture.bob))),
+            Some(U256::from(5))
         );
 
+        // Check spending directly via contract
+        /*
+        fixture.approve_stake_token(spender, U256::from(10), Sender(fixture.bob));
+        assert_eq!(
+            fixture.allowance_stake_token(Key::from(fixture.bob), Key::from(spender)),
+            Some(U256::from(10))
+        );
+        fixture.transfer_from(Key::from(fixture.bob), Key::from(fixture.ali), U256::from(5), Sender(fixture.bob));
+
+        //Spender is a ContractPackageHash
+        fixture.approve_stake_token(spender, U256::from(10), Sender(fixture.bob));
+        assert_eq!(
+            fixture.allowance_stake_token(Key::from(fixture.bob), Key::from(spender)),
+            Some(U256::from(10))
+        );
+        println!("Spender: {}", Key::from(spender).to_formatted_string().as_str());
+        */
+
         // We stake tokens
-        fixture.stake(stake_amount, Sender(owner));
+        fixture.stake(stake_amount, Sender(fixture.bob));
+        println!("spender in contract: {}", fixture.get_debug_msg("debug_msg1").as_str());
+
         /*
         println!("erc20_contract_key {}", fixture.get_debug_msg("debug_msg1").as_str());
         

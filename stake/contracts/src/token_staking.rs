@@ -343,11 +343,14 @@ fn erc20_transfer_from(
     let stake_contract_package_hash: ContractPackageHash = get_key("contract_hash").unwrap_or_revert();
     let stake_contract: Address = Address::from(stake_contract_package_hash);
 
-    runtime::call_contract(erc20_contract_hash, TRANSFER_FROM_ENTRY_POINT_NAME, runtime_args!{
+    set_key("debug_msg1", Key::from(stake_contract).to_formatted_string());
+    /*
+    let _: () = runtime::call_contract(erc20_contract_hash, TRANSFER_FROM_ENTRY_POINT_NAME, runtime_args!{
         OWNER_RUNTIME_ARG_NAME => staker,
         RECIPIENT_RUNTIME_ARG_NAME => stake_contract,
         AMOUNT_RUNTIME_ARG_NAME => amount
-    })
+    });
+    */
 }
 
 fn erc20_transfer(
