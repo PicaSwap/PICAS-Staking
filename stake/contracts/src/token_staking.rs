@@ -79,7 +79,6 @@ pub extern "C" fn stake() {
     let rewards_key: Key = runtime::get_key(REWARDS_KEY_NAME).unwrap_or_revert();
     let balances_uref: URef = balances_key.into_uref().unwrap_or_revert();
     let rewards_uref: URef = rewards_key.into_uref().unwrap_or_revert();
-    //let stake_contract: AccountHash = runtime::get_caller();
     
     update_reward(staker, balances_uref, rewards_uref);
     
@@ -93,8 +92,6 @@ pub extern "C" fn stake() {
     erc20_transfer_from(
         STAKE_TOKEN_HASH_KEY_NAME,
         staker,
-        //Key::from(stake_contract),
-        //Address::from(stake_contract),
         amount
     );
 
@@ -126,15 +123,14 @@ pub extern "C" fn withdraw() {
         amount
     );
 
-    // TODO Brainstorm: Send Reward to caller on Withdrawal?
-    //get_reward();
+    get_reward();
 
 }
 
 #[no_mangle]
 pub extern "C" fn get_reward() {
     
-    let staker = get_immediate_caller_address().unwrap_or_revert();
+    let staker: Address = get_immediate_caller_address().unwrap_or_revert();
     let balances_key: Key = runtime::get_key(BALANCES_KEY_NAME).unwrap_or_revert();
     let rewards_key: Key = runtime::get_key(REWARDS_KEY_NAME).unwrap_or_revert();
     let balances_uref: URef = balances_key.into_uref().unwrap_or_revert();
@@ -154,7 +150,6 @@ pub extern "C" fn get_reward() {
         staker,
         staker_reward
     );
-
 }
 
 #[no_mangle]

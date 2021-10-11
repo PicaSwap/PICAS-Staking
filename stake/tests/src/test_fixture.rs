@@ -59,7 +59,8 @@ pub struct TestFixture {
     pub stake_contract_hash: ContractHash,
     pub contract_name: String,
     pub staking_contract_hash: ContractHash,
-    pub staking_contract_package_hash: ContractPackageHash
+    pub staking_contract_package_hash: ContractPackageHash,
+    pub current_time: u64
 }
 
 impl TestFixture {
@@ -140,8 +141,13 @@ impl TestFixture {
             reward_contract_hash: reward_contract_hash,
             contract_name: CONTRACT_NAME.to_string(),
             staking_contract_hash: staking_contract_hash,
-            staking_contract_package_hash: staking_contract_package_hash 
+            staking_contract_package_hash: staking_contract_package_hash,
+            current_time: 0 as u64
         }
+    }
+
+    pub fn add_time(&mut self, step: u64) {
+        self.current_time += step;
     }
 
     fn query_contract<T: CLTyped + FromBytes>(&self, name: &str) -> Option<T> {
@@ -205,6 +211,7 @@ impl TestFixture {
         let session = SessionBuilder::new(code, args)
             .with_address(address)
             .with_authorization_keys(&[address])
+            .with_block_time(self.current_time)
             .build();
         self.context.run(session);
     }
@@ -220,7 +227,7 @@ impl TestFixture {
         );
     }
 
-    pub fn stake_balance_of(&self, account: Key) -> Option<U256> {
+    pub fn stake_token_balance_of(&self, account: Key) -> Option<U256> {
         let item_key = base64::encode(&account.to_bytes().unwrap());
 
         let key = Key::Hash(self.stake_contract_hash.value());
@@ -231,6 +238,20 @@ impl TestFixture {
 
         Some(value.into_t::<U256>().unwrap())
     }
+
+    pub fn reward_token_balance_of(&self, account: Key) -> Option<U256> {
+        let item_key = base64::encode(&account.to_bytes().unwrap());
+
+        let key = Key::Hash(self.reward_contract_hash.value());
+        let value = self
+            .context
+            .query_dictionary_item(key, Some(consts::BALANCES_KEY_NAME.to_string()), item_key)
+            .ok()?;
+
+        Some(value.into_t::<U256>().unwrap())
+    }
+
+    
 
     pub fn approve_stake_token(&mut self, spender: Address, amount: U256, sender: Sender) {
         self.call(
@@ -265,13 +286,25 @@ impl TestFixture {
         Some(value.into_t::<U256>().unwrap())
     }
     
-    pub fn transfer_from(&mut self, owner: Key, recipient: Key, amount: U256, sender: Sender) {
+    pub fn transfer_stake_token_from(&mut self, owner: Key, recipient: Key, amount: U256, sender: Sender) {
         self.call(
             sender,
             self.stake_contract_hash,
             consts::TRANSFER_FROM_ENTRY_POINT_NAME,
             runtime_args! {
                 consts::OWNER_RUNTIME_ARG_NAME => owner,
+                consts::RECIPIENT_RUNTIME_ARG_NAME => recipient,
+                consts::AMOUNT_RUNTIME_ARG_NAME => amount
+            },
+        );
+    }
+
+    pub fn transfer_reward_token(&mut self, recipient: Key, amount: U256, sender: Sender) {
+        self.call(
+            sender,
+            self.reward_contract_hash,
+            consts::TRANSFER_ENTRY_POINT_NAME,
+            runtime_args! {
                 consts::RECIPIENT_RUNTIME_ARG_NAME => recipient,
                 consts::AMOUNT_RUNTIME_ARG_NAME => amount
             },
