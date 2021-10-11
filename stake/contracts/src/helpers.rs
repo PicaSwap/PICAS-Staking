@@ -34,6 +34,17 @@ pub(crate) fn set_key<T: ToBytes + CLTyped>(name: &str, value: T) {
     }
 }
 
+pub(crate) fn get_self_address() -> Result<Address, Error> {
+    get_last_call_stack_item()
+        .map(call_stack_element_to_address)
+        .ok_or(Error::InvalidContext)
+}
+
+fn get_last_call_stack_item() -> Option<CallStackElement> {
+    let call_stack = runtime::get_call_stack();
+    call_stack.into_iter().rev().nth(0)
+}
+
 /// Gets the immediate call stack element of the current execution.
 fn get_immediate_call_stack_item() -> Option<CallStackElement> {
     let call_stack = runtime::get_call_stack();

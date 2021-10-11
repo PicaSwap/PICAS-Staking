@@ -124,7 +124,12 @@ impl TestFixture {
             .build();
         context.run(session);
 
-        let staking_contract_hash: ContractHash = context.get_account(ali.to_account_hash()).unwrap().named_keys().get(CONTRACT_NAME).unwrap().normalize().into_hash().unwrap().into();
+        let contract_name = String::from(CONTRACT_NAME);
+        let contract_hash_key_name = String::from(contract_name.clone());
+        let contract_package_hash_key_name = String::from(contract_name.clone() + "_package_hash");
+
+        let staking_contract_hash: ContractHash = context.get_account(ali.to_account_hash()).unwrap().named_keys().get(&contract_hash_key_name).unwrap().normalize().into_hash().unwrap().into();
+        let staking_contract_package_hash: ContractPackageHash = context.get_account(ali.to_account_hash()).unwrap().named_keys().get(&contract_package_hash_key_name).unwrap().normalize().into_hash().unwrap().into();
         
         TestFixture {
             context,
@@ -135,7 +140,7 @@ impl TestFixture {
             reward_contract_hash: reward_contract_hash,
             contract_name: CONTRACT_NAME.to_string(),
             staking_contract_hash: staking_contract_hash,
-            staking_contract_package_hash: ContractPackageHash::new(staking_contract_hash.value())
+            staking_contract_package_hash: staking_contract_package_hash 
         }
     }
 

@@ -11,13 +11,13 @@ mod entry_points;
 mod named_keys;
 pub mod constants;
 
-use crate::helpers::{ set_key, get_key, get_immediate_caller_address, dictionary_read, dictionary_write };
+use crate::helpers::{ set_key, get_key, get_immediate_caller_address, dictionary_read, dictionary_write, get_self_address};
 
 use crate::constants::{
     STAKING_CONTRACT_KEY_NAME, REWARD_TOKEN_HASH_KEY_NAME, STAKE_TOKEN_HASH_KEY_NAME,
     REWARD_RATE_KEY_NAME, TOTAL_SUPPLY_KEY_NAME, AMOUNT_KEY_NAME, BALANCES_KEY_NAME,
     REWARDS_KEY_NAME, USER_REWARD_PER_TOKEN_PAID_KEY_NAME, LAST_UPDATE_KEY_NAME,
-    REWARD_PER_TOKEN_STORED_KEY_NAME
+    REWARD_PER_TOKEN_STORED_KEY_NAME,
 };
 
 use alloc::string::String;
@@ -36,7 +36,9 @@ use casper_types::{
 #[no_mangle]
 fn call() {
     
-    let staking_contract_name: String = runtime::get_named_arg(STAKING_CONTRACT_KEY_NAME);
+    let contract_name: String = runtime::get_named_arg(STAKING_CONTRACT_KEY_NAME);
+    let contract_hash_key_name = String::from(contract_name.clone());
+    let contract_package_hash_key_name = String::from(contract_name.clone() + "_package_hash");
     
     let stake_token_key: Key = runtime::get_named_arg(STAKE_TOKEN_HASH_KEY_NAME);
     let reward_token_key: Key = runtime::get_named_arg(REWARD_TOKEN_HASH_KEY_NAME);
@@ -46,42 +48,21 @@ fn call() {
     // TODO Check that Reward Token and Stake Token are existing ERC20 contracts
 
     let named_keys: NamedKeys = named_keys::default(
-        staking_contract_name.clone(),
+        contract_name,
         stake_token_key,
         reward_token_key,
         reward_rate
     );
     
     // We store contract on-chain
-    let (contract_hash, _version) =
-            storage::new_locked_contract(entry_points::default(), Some(named_keys), None, None);
-    
-    // ContractHash is saved into 'named keys' of 'Deployer account'
-    // Need to be &str
-    runtime::put_key(staking_contract_name.as_str(), Key::from(contract_hash));
+    let (contract_hash, _version) = storage::new_locked_contract(
+        entry_points::default(),
+        Some(named_keys),
+        Some(String::from(contract_package_hash_key_name)),
+        None
+    );
 
-    //let _: () = runtime::call_contract(contract_hash, "init", RuntimeArgs::new());
-
-    //let key: Key = runtime::get_key(CONTRACT_KEY_NAME).unwrap_or_revert();
-    //let hash: HashAddr = key.into_hash().unwrap_or_revert();
-    //let contract_hash = ContractHash::new(hash);
-    let contract_package_hash : ContractPackageHash = ContractPackageHash::new(contract_hash.value());
-    let _: () = runtime::call_contract(contract_hash, "init", runtime_args!{
-        "contract_hash" => contract_package_hash
-    });
-}
-
-#[no_mangle]
-pub extern "C" fn init() {
-let value: Option<bool> = get_key("initialized");
-match value {
-    Some(_) => {},
-    None => {
-        let contract_hash :  ContractPackageHash = runtime::get_named_arg("contract_hash");
-        set_key("contract_hash", contract_hash);
-        set_key("initialized", true);
-    },
-}
+    runtime::put_key(contract_hash_key_name.as_str(), Key::from(contract_hash));
 }
 
 #[no_mangle]
@@ -330,17 +311,13 @@ fn erc20_transfer_from(
     let erc20_contract_hash_addr: HashAddr  = erc20_contract_hash_key.into_hash().unwrap_or_revert();
     let erc20_contract_hash: ContractHash = ContractHash::new(erc20_contract_hash_addr);
     
-    let stake_contract_package_hash: ContractPackageHash = get_key("contract_hash").unwrap_or_revert();
-    let stake_contract: Address = Address::from(stake_contract_package_hash);
+    let self_addr = get_self_address().unwrap_or_revert();
 
-    set_key("debug_msg1", Key::from(stake_contract).to_formatted_string());
-    /*
     let _: () = runtime::call_contract(erc20_contract_hash, TRANSFER_FROM_ENTRY_POINT_NAME, runtime_args!{
         OWNER_RUNTIME_ARG_NAME => staker,
-        RECIPIENT_RUNTIME_ARG_NAME => stake_contract,
+        RECIPIENT_RUNTIME_ARG_NAME => self_addr,
         AMOUNT_RUNTIME_ARG_NAME => amount
     });
-    */
 }
 
 fn erc20_transfer(
@@ -355,10 +332,8 @@ fn erc20_transfer(
     let erc20_contract_hash: ContractHash = ContractHash::new(erc20_contract_hash_addr);
  
     // TODO: throwns insufficient balance because can not deposit
-    /*
     runtime::call_contract(erc20_contract_hash, TRANSFER_ENTRY_POINT_NAME, runtime_args!{
         RECIPIENT_RUNTIME_ARG_NAME => staker,
         AMOUNT_RUNTIME_ARG_NAME => amount
     })
-    */
 }
