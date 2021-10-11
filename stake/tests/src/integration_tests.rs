@@ -8,7 +8,6 @@ mod tests {
 
     use crate::test_fixture::{Sender, TestFixture};
 
-    /*
     #[test]
     fn should_install() {
         let fixture = TestFixture::install_contract();
@@ -25,8 +24,6 @@ mod tests {
         //assert_eq!(fixture.last_update_time(), U256::from(u64::from(runtime::get_blocktime())));
         
     }
-    */
-    
     
     #[test]
     fn should_stake() {
@@ -86,26 +83,6 @@ mod tests {
         fixture.stake(stake_amount, Sender(fixture.bob));
         println!("spender in contract: {}", fixture.get_debug_msg("debug_msg1").as_str());
 
-        /*
-        println!("erc20_contract_key {}", fixture.get_debug_msg("debug_msg1").as_str());
-        
-        println!("erc20_contract_uref {}", fixture.get_debug_msg("debug_msg2").as_str());
-        
-        //hash-xxx
-        println!("erc20_contract_hash_key {}", fixture.get_debug_msg("debug_msg3").as_str());
-        
-        //contract-xxx
-        println!("erc20_contract_hash {}", fixture.get_debug_msg("debug_msg5").as_str());
-
-        //staker
-        println!("staker {}", fixture.get_debug_msg("debug_msg6").as_str());
-        //stake_contract
-        println!("stake_contract {}", fixture.get_debug_msg("debug_msg7").as_str());
-
-        println!("spender {}", spender);
-        println!("owner {}", owner);
-
-        */
 
         // We don't need to transfer
         /*fixture.transfer_from(

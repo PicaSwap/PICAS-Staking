@@ -330,22 +330,3 @@ impl TestFixture {
     }
     */
 }
-
-/*
-fn get_contract_hash(
-    context: casper_engine_test_support::TestContext,
-    account: AccountHash,
-    contract_key_name: &str
-) -> ContractHash {
-    context
-        .get_account(account)
-        .unwrap()
-        .named_keys()
-        .get(contract_key_name)
-        .unwrap()
-        .normalize()
-        .into_hash()
-        .unwrap()
-        .into()
-}
-*/
