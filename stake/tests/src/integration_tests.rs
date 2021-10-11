@@ -66,7 +66,6 @@ mod tests {
         );
 
         // Check spending directly via contract
-        /*
         fixture.approve_stake_token(spender, U256::from(10), Sender(fixture.bob));
         assert_eq!(
             fixture.allowance_stake_token(Key::from(fixture.bob), Key::from(spender)),
@@ -81,11 +80,10 @@ mod tests {
             Some(U256::from(10))
         );
         println!("Spender: {}", Key::from(spender).to_formatted_string().as_str());
-        */
 
         // We stake tokens
         // THIS LINE THROWNS ApiError::User(65533) even if there is an approval checked by the test
-        //fixture.stake(stake_amount, Sender(fixture.bob));
+        fixture.stake(stake_amount, Sender(fixture.bob));
         println!("spender in contract: {}", fixture.get_debug_msg("debug_msg1").as_str());
 
         /*
