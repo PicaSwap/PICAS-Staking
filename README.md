@@ -2,6 +2,8 @@
 
 Staking contract implementation using the ERC-20 Casper crate
 
+Walkthough Video https://www.loom.com/share/739878c134824e8688b7911dbac792fd
+
 ## Description
 
 Contract allowing to `stake` token of **PICAS** (PicaSwap DEX) to get rewarded with it.
