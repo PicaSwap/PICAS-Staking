@@ -273,10 +273,10 @@ impl TestFixture {
         );
     }
 
-    /*
     pub fn withdraw(&mut self, amount: U256, sender: Sender) {
         self.call(
             sender,
+            self.staking_contract_hash,
             WITHDRAW_ENTRY_POINT_NAME,
             runtime_args! {
                 AMOUNT_KEY_NAME => amount
@@ -284,6 +284,7 @@ impl TestFixture {
         );
     }
 
+    /*
     pub fn get_reward(&mut self, sender: Sender) {
         self.call(
             sender,

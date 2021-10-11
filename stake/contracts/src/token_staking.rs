@@ -28,7 +28,7 @@ use casper_erc20::{ Error, Address::Account, Address,
         RECIPIENT_RUNTIME_ARG_NAME, AMOUNT_RUNTIME_ARG_NAME, SYMBOL_RUNTIME_ARG_NAME}
     };
 
-use casper_contract::{contract_api::{runtime, storage}, unwrap_or_revert::UnwrapOrRevert};
+use casper_contract::{contract_api::{runtime, storage, system}, unwrap_or_revert::UnwrapOrRevert};
 use casper_types::{
     contracts::{NamedKeys}, U256, ContractHash, Key, ContractPackageHash,
     URef, RuntimeArgs, runtime_args, account::AccountHash, HashAddr};
@@ -125,8 +125,10 @@ pub extern "C" fn withdraw() {
     let amount: U256 = runtime::get_named_arg(AMOUNT_KEY_NAME);
 
     let staker = get_immediate_caller_address().unwrap_or_revert();
-    let balances_uref = get_key(BALANCES_KEY_NAME).unwrap_or_revert();
-    let rewards_uref = get_key(REWARDS_KEY_NAME).unwrap_or_revert();
+    let balances_key: Key = runtime::get_key(BALANCES_KEY_NAME).unwrap_or_revert();
+    let rewards_key: Key = runtime::get_key(REWARDS_KEY_NAME).unwrap_or_revert();
+    let balances_uref: URef = balances_key.into_uref().unwrap_or_revert();
+    let rewards_uref: URef = rewards_key.into_uref().unwrap_or_revert();
 
     update_reward(staker, balances_uref, rewards_uref);
 
@@ -318,28 +320,14 @@ fn named_key_sub(amount: U256, key_name: &str) {
 fn erc20_transfer_from(
     erc20_hash_key_name: &str,
     staker: Address,
-    //stake_contract: Address,
     amount: U256
 ) {
     let erc20_contract_key: Key = runtime::get_key(erc20_hash_key_name).unwrap_or_revert();
     let erc20_contract_uref: URef = erc20_contract_key.into_uref().unwrap_or_revert();
-    
     let erc20_contract_hash_key: Key =  storage::read(erc20_contract_uref).unwrap_or_revert().unwrap_or_revert();
-
     let erc20_contract_hash_addr: HashAddr  = erc20_contract_hash_key.into_hash().unwrap_or_revert();
     let erc20_contract_hash: ContractHash = ContractHash::new(erc20_contract_hash_addr);
     
-    /*
-    set_key("debug_msg1", erc20_contract_key.to_formatted_string());
-    set_key("debug_msg2", erc20_contract_uref.to_formatted_string());
-    set_key("debug_msg3", erc20_contract_hash_key.to_formatted_string());
-    set_key("debug_msg5", erc20_contract_hash.to_formatted_string());
-    
-    set_key("debug_msg6", staker.as_account_hash().unwrap().to_formatted_string());
-    set_key("debug_msg7", stake_contract.as_account_hash().unwrap().to_formatted_string());
-*/
-
-    //let _: () = runtime::call_contract(erc20_contract_hash, SYMBOL_RUNTIME_ARG_NAME, RuntimeArgs::new());
     let stake_contract_package_hash: ContractPackageHash = get_key("contract_hash").unwrap_or_revert();
     let stake_contract: Address = Address::from(stake_contract_package_hash);
 
@@ -358,9 +346,17 @@ fn erc20_transfer(
     staker: Address,
     amount: U256
 ) {
-    let erc20_contract_hash: ContractHash = get_key(erc20_hash_key_name).unwrap_or_revert();
+    let erc20_contract_key: Key = runtime::get_key(erc20_hash_key_name).unwrap_or_revert();
+    let erc20_contract_uref: URef = erc20_contract_key.into_uref().unwrap_or_revert();
+    let erc20_contract_hash_key: Key =  storage::read(erc20_contract_uref).unwrap_or_revert().unwrap_or_revert();
+    let erc20_contract_hash_addr: HashAddr  = erc20_contract_hash_key.into_hash().unwrap_or_revert();
+    let erc20_contract_hash: ContractHash = ContractHash::new(erc20_contract_hash_addr);
+ 
+    // TODO: throwns insufficient balance because can not deposit
+    /*
     runtime::call_contract(erc20_contract_hash, TRANSFER_ENTRY_POINT_NAME, runtime_args!{
         RECIPIENT_RUNTIME_ARG_NAME => staker,
         AMOUNT_RUNTIME_ARG_NAME => amount
     })
+    */
 }
