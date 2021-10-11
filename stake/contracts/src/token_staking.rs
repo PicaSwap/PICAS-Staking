@@ -195,16 +195,12 @@ fn reward_per_token(current_block_time: U256) -> U256 {
         let reward_rate: U256 = get_key(REWARD_RATE_KEY_NAME).unwrap_or_revert();
         let last_update_time: U256 = get_key(LAST_UPDATE_KEY_NAME).unwrap_or_revert();
         
-        
-        let new_value: U256 = (reward_rate * ( current_block_time - last_update_time ) / total_supply) + reward_per_token_stored;
-        /*
         let new_value: U256 = {
             reward_per_token_stored
                 // TODO rework time operations
                 .checked_add(reward_rate * ( current_block_time - last_update_time ) / total_supply)
                 .ok_or(Error::Overflow).unwrap_or_revert()
         };
-        */
     
         set_key(REWARD_PER_TOKEN_STORED_KEY_NAME, new_value);
 
@@ -232,34 +228,27 @@ fn dictionary_add(
     dictionary_uref: URef,
     staker: Address,
     amount: U256,
-) {
-/*
 ) -> Result<(), Error> {
-    
     if amount.is_zero() {
         return Ok(());
     }
-    
+
     let new_staker_balance = {
         let staker_balance = dictionary_read(dictionary_uref, staker);
         staker_balance
             .checked_add(amount)
             .ok_or(Error::Overflow)?
     };
-    */
-    let staker_balance: U256 = dictionary_read(dictionary_uref, staker);
-    
-    dictionary_write(dictionary_uref, staker, staker_balance + amount);
 
-    //Ok(())
+    dictionary_write(dictionary_uref, staker, new_staker_balance);
+
+    Ok(())
 }
 
 fn dictionary_sub(
     dictionary_uref: URef,
     staker: Address,
     amount: U256,
-) {
-/*
 ) -> Result<(), Error> {
     if amount.is_zero() {
         return Ok(());
@@ -271,45 +260,35 @@ fn dictionary_sub(
             .checked_sub(amount)
             .ok_or(Error::InsufficientBalance)?
     };
-    */
-    let staker_balance: U256 = dictionary_read(dictionary_uref, staker);
 
-    dictionary_write(dictionary_uref, staker, staker_balance - amount);
+    dictionary_write(dictionary_uref, staker, new_staker_balance);
 
-    //Ok(())
+    Ok(())
 }
 
 fn named_key_add(amount: U256, key_name: &str) {
     
-    /*
     let new_value: U256 = {
         let current_value: U256 = get_key(key_name).unwrap_or_revert();
         current_value
             .checked_add(amount)
             .ok_or(Error::Overflow).unwrap_or_revert()
     };
-    */
 
-    let current_value: U256 = get_key(key_name).unwrap_or_revert();
-
-    set_key(key_name, current_value + amount);
+    set_key(key_name, new_value);
 
 }
 
 fn named_key_sub(amount: U256, key_name: &str) {
     
-    /*
     let new_value: U256 = {
         let current_value: U256 = get_key(key_name).unwrap_or_revert();
         current_value
             .checked_sub(amount)
             .ok_or(Error::InsufficientBalance).unwrap_or_revert()
     };
-    */
 
-    let current_value: U256 = get_key(key_name).unwrap_or_revert();
-
-    set_key(key_name, current_value - amount);
+    set_key(key_name, new_value);
 
 }
 
