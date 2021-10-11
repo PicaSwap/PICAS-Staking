@@ -154,8 +154,10 @@ pub extern "C" fn withdraw() {
 pub extern "C" fn get_reward() {
     
     let staker = get_immediate_caller_address().unwrap_or_revert();
-    let balances_uref = get_key(BALANCES_KEY_NAME).unwrap_or_revert();
-    let rewards_uref = get_key(REWARDS_KEY_NAME).unwrap_or_revert();
+    let balances_key: Key = runtime::get_key(BALANCES_KEY_NAME).unwrap_or_revert();
+    let rewards_key: Key = runtime::get_key(REWARDS_KEY_NAME).unwrap_or_revert();
+    let balances_uref: URef = balances_key.into_uref().unwrap_or_revert();
+    let rewards_uref: URef = rewards_key.into_uref().unwrap_or_revert();
 
     update_reward(staker, balances_uref, rewards_uref);
 

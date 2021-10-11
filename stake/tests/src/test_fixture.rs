@@ -284,15 +284,15 @@ impl TestFixture {
         );
     }
 
-    /*
     pub fn get_reward(&mut self, sender: Sender) {
         self.call(
             sender,
+            self.staking_contract_hash,
             GET_REWARD_ENTRY_POINT_NAME,
             runtime_args! {},
         );
     }
-    */
+
     /*
     pub fn balance(&self, account: Key) -> Option<U256> {
         let item_key = base64::encode(&account.to_bytes().unwrap());

@@ -109,6 +109,24 @@ mod tests {
         fixture.stake(stake_amount, sender);
         fixture.withdraw(stake_amount, sender);
     }
+
+    #[test]
+    fn should_get_reward() {
+        let mut fixture = TestFixture::install_contract();
+
+        let approve_amount = U256::from(10);
+        let stake_amount = U256::from(5);
+        assert!(approve_amount > stake_amount);
+
+        let spender: Address = Address::from(fixture.staking_contract_package_hash);
+        let sender = Sender(fixture.bob);
+
+        fixture.approve_stake_token(spender, approve_amount, sender);
+        assert_eq!(fixture.allowance_stake_token(Key::from(fixture.bob), Key::from(spender)), Some(U256::from(10)));
+
+        fixture.stake(stake_amount, sender);
+        fixture.get_reward(sender);
+    }
 }
 
 fn main() {
